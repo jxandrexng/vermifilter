@@ -21,7 +21,7 @@ AnalogPHMeter pHSensor2(PH_SENSOR2_PIN);
 unsigned int pHCalibrationValueAddress = 0;
 int turbidityUnit1 = 0, turbidityUnit2 = 0;
 int distance1, distance2, pos;
-Servo myservo;
+Servo myservo1, myservo2, myservo3, myservo4;
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing
 
 // SETUP
@@ -32,7 +32,10 @@ void setup() {
   pHSensor1.initialize(pHCalibrationValue);
   pHSensor2.initialize(pHCalibrationValue);
   pinMode(RELAY1, OUTPUT);
-  myservo.attach(9);
+  myservo1.attach(9);
+  myservo2.attach(8);
+  myservo3.attach(7);
+  myservo4.attach(6);
 }
 
 // LOOP
@@ -128,7 +131,7 @@ void relay2_Off() {
 
 /*void Servo1_Expand(){
     for(pos=0;pos<90;pos+=1){
-    myservo.write(pos);
+    myservo1.write(pos);
     delay(5);
     }
     delay(5000);
@@ -136,7 +139,7 @@ void relay2_Off() {
 
 void Servo1_Retract(){
     for(pos=90;pos>=1;pos-=1){
-    myservo.write(pos);
+    myservo1.write(pos);
     delay(5);
     }
     delay(5000);
@@ -144,7 +147,7 @@ void Servo1_Retract(){
 
 void Servo2_Expand(){
     for(pos=0;pos<90;pos+=1){
-    myservo.write(pos);
+    myservo2.write(pos);
     delay(5);
     }
     delay(5000);
@@ -152,7 +155,7 @@ void Servo2_Expand(){
 
 void Servo2_Retract(){
     for(pos=90;pos>=1;pos-=1){
-    myservo.write(pos);
+    myservo2.write(pos);
     delay(5);
     }
     delay(5000);
@@ -160,7 +163,7 @@ void Servo2_Retract(){
 
 void Servo3_Expand(){
     for(pos=0;pos<90;pos+=1){
-    myservo.write(pos);
+    myservo3.write(pos);
     delay(5);
     }
     delay(5000);
@@ -168,7 +171,7 @@ void Servo3_Expand(){
 
 void Servo3_Retract(){
     for(pos=90;pos>=1;pos-=1){
-    myservo.write(pos);
+    myservo3.write(pos);
     delay(5);
     }
     delay(5000);
@@ -176,7 +179,7 @@ void Servo3_Retract(){
 
 void Servo4_Expand(){
     for(pos=0;pos<90;pos+=1){
-    myservo.write(pos);
+    myservo4.write(pos);
     delay(5);
     }
     delay(5000);
@@ -184,7 +187,7 @@ void Servo4_Expand(){
 
 void Servo4_Retract(){
     for(pos=90;pos>=1;pos-=1){
-    myservo.write(pos);
+    myservo4.write(pos);
     delay(5);
     }
     delay(5000);
