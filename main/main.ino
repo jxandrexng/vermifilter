@@ -68,8 +68,11 @@ void loop() {
   Serial.print("\n");
   relay1_On();
   relay2_On();
-  servo1_Expand();
-  servo1_Retract();
+  relay1_Off();
+  relay2_Off();
+//  servo1_Expand();
+//  servo1_Retract();
+  delay(1000);
 }
 
 int distance1_Read(){
@@ -169,17 +172,15 @@ void relay4_Off() {
 void servo1_Expand(){
     for(pos=0;pos<=90;pos+=1){
     myservo1.write(pos);
-    delay(15);
+    delay(5);
     }
-    delay(5000);
 }
 
 void servo1_Retract(){
     for(pos=90;pos>=1;pos-=1){
     myservo1.write(pos);
-    delay(15);
+    delay(5);
     }
-    delay(5000);
 }
 
 void servo2_Expand(){
