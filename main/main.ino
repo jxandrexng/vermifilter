@@ -1,26 +1,30 @@
 #include <EEPROM.h>
 #include <NewPing.h> //Ultrasonic Sensor Library
 #include <Servo.h>
+#include <OneWire.h>
 
 // CONSTANTS
-#define TRIGGER1_PIN  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
-#define ECHO1_PIN     11  // Arduino pin tied to echo pin on the first ultrasonic sensor.
-#define TRIGGER2_PIN  10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
-#define ECHO2_PIN     9  // Arduino pin tied to echo pin on the second ultrasonic sensor.
-#define RELAY1       3  // Arduino pin tied to relay1 pin of the influent pump.
-#define RELAY2       4  // Arduino pin tied to relay2 pin of the washer1 pump.
-#define RELAY3       5  // Arduino pin tied to relay3 pin of the washer2 pump.
-#define RELAY4       6  // Arduino pin tied to relay4 pin of the second pump.
-#define TURBIDITY1_PIN A0 // Arduino pin tied to turbidity1 sensor.
-#define TURBIDITY2_PIN A1 // Arduino pin tied to turbidity2 sensor.
-#define PH_SENSOR1_PIN A2 // Arduino pin tied to ph1 sensor.
-#define PH_SENSOR2_PIN A3 // Arduino pin tied to ph2 sensor.
-#define MAX_DISTANCE 500 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-#define waterLimit 10 //Limit in cm to which the ultrasonic sensor is in proximity to the water.
-#define containerHeight 30 //Height of the container in cm
-#define Offset1 0.00  //Deviation compensate for pH Sensor1
-#define Offset2 0.00  //Deviation compensate for pH Sensor2
-#define ArrayLength  40 //Times of collection
+#define TRIGGER1_PIN    12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
+#define ECHO1_PIN       11  // Arduino pin tied to echo pin on the first ultrasonic sensor.
+#define TRIGGER2_PIN    10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
+#define ECHO2_PIN        9  // Arduino pin tied to echo pin on the second ultrasonic sensor.
+#define TEMP_PIN         8  // Arduino pin tied to temperature sensor.
+#define RELAY1           3  // Arduino pin tied to relay1 pin of the influent pump.
+#define RELAY2           4  // Arduino pin tied to relay2 pin of the washer1 pump.
+#define RELAY3           5  // Arduino pin tied to relay3 pin of the washer2 pump.
+#define RELAY4           6  // Arduino pin tied to relay4 pin of the second pump.
+#define TURBIDITY1_PIN  A0 // Arduino pin tied to turbidity1 sensor.
+#define TURBIDITY2_PIN  A1 // Arduino pin tied to turbidity2 sensor.
+#define PH_SENSOR1_PIN  A2 // Arduino pin tied to ph1 sensor.
+#define PH_SENSOR2_PIN  A3 // Arduino pin tied to ph2 sensor.
+#define MOISTURE_PIN    A4 // Arduino pin tied to soil moisture sensor.
+#define TEMPERATURE_PIN A5 // Arduino pin tied to temperature sensor.
+#define MAX_DISTANCE   500 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+#define waterLimit      10 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
+#define containerHeight 30 // Height of the container in cm.
+#define Offset1          0.00  //Deviation compensate for pH Sensor1.
+#define Offset2          0.00  //Deviation compensate for pH Sensor2.
+#define ArrayLength     40 // Times of collection for pH values.
 
 
 
@@ -29,8 +33,10 @@ int pHArray[ArrayLength];   //Store the average value of the sensor feedback
 int pHArrayIndex = 0;
 int distance1, distance2, pos = 0;
 int turbidityUnit1 = 0, turbidityUnit2 = 0;
+int moistureValue = 0;
 unsigned int pHCalibrationValueAddress = 0;
-float pHUnit1 = 0, pHUnit2 = 0;
+float pHUnit1 = 0, pHUnit2 = 0, temperature = 0;
+OneWire ds(TEMP_PIN);
 Servo myservo1, myservo2;
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing
 NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE);
@@ -50,14 +56,15 @@ void setup() {
 
 // LOOP
 void loop() {
-  pH1_Print();
-  turbidity1_Print();
-  volume1_Print();
-  pH2_Print();
-  turbidity2_Print();
-  volume2_Print();
-  pump_Influent();
-  pump_Effluent();
+  //  pH1_Print();
+  //  turbidity1_Print();
+  //  volume1_Print();
+  //  pH2_Print();
+  //  turbidity2_Print();
+  //  volume2_Print();
+  //  pump_Influent();
+  //  pump_Effluent();
+  temp_Print();
   Serial.print("\n");
 }
 
@@ -95,7 +102,7 @@ float pH1_Read() {
 void pH1_Print() {
   pH1_Read();
   Serial.print(pHUnit1);
-  Serial.print("pH ");
+  Serial.print(" ");
 }
 
 float pH2_Read() {
@@ -110,7 +117,7 @@ float pH2_Read() {
 void pH2_Print() {
   pH2_Read();
   Serial.print(pHUnit2);
-  Serial.print("pH ");
+  Serial.print(" ");
 }
 
 void turbidity1_Read() {
@@ -122,7 +129,7 @@ void turbidity1_Read() {
 void turbidity1_Print() {
   turbidity1_Read();
   Serial.print(turbidityUnit1);
-  Serial.print("NTU ");
+  Serial.print(" ");
 }
 
 void turbidity2_Read() {
@@ -134,19 +141,82 @@ void turbidity2_Read() {
 void turbidity2_Print() {
   turbidity2_Read();
   Serial.print(turbidityUnit2);
-  Serial.print("NTU ");
+  Serial.print(" ");
+}
+
+int moisture_Read() {
+  moistureValue = analogRead(MOISTURE_PIN);
+  return moistureValue;
+}
+
+void moisture_Print() {
+  Serial.print(moistureValue);
+  Serial.print(" ");
 }
 
 void volume1_Print() {
   float waterVolume1 = ((30.0 - distance1) * (30.0 * 40.0) / (30.0 * 30.0 * 40.0)) * 100.0;
   Serial.print(waterVolume1);
-  Serial.print("% ");
+  Serial.print(" ");
 }
 
 void volume2_Print() {
   float waterVolume2 = ((30.0 - distance2) * (30.0 * 40.0) / (30.0 * 30.0 * 40.0)) * 100.0;
   Serial.print(waterVolume2);
-  Serial.print("% ");
+  Serial.print(" ");
+}
+
+float temp_Read() {
+  //returns the temperature from one DS18S20 in DEG Celsius
+
+  byte data[12];
+  byte addr[8];
+
+  if ( !ds.search(addr)) {
+    //no more sensors on chain, reset search
+    ds.reset_search();
+    return -1000;
+  }
+
+  if ( OneWire::crc8( addr, 7) != addr[7]) {
+    //Serial.println("CRC is not valid!");
+    return -1000;
+  }
+
+  if ( addr[0] != 0x10 && addr[0] != 0x28) {
+    //Serial.print("Device is not recognized");
+    return -1000;
+  }
+
+  ds.reset();
+  ds.select(addr);
+  ds.write(0x44, 1); // start conversion, with parasite power on at the end
+
+  byte present = ds.reset();
+  ds.select(addr);
+  ds.write(0xBE); // Read Scratchpad
+
+
+  for (int i = 0; i < 9; i++) { // we need 9 bytes
+    data[i] = ds.read();
+  }
+
+  ds.reset_search();
+
+  byte MSB = data[1];
+  byte LSB = data[0];
+
+  float tempRead = ((MSB << 8) | LSB); //using two's compliment
+  temperature = tempRead / 16;
+
+  return temperature;
+
+}
+
+void temp_Print() {
+  temp_Read();
+  Serial.print(temperature);
+  Serial.print(" ");
 }
 
 void relay1_On() {
