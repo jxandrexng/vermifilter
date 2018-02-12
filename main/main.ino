@@ -12,7 +12,8 @@
 #define RELAY1           3  // Arduino pin tied to relay1 pin of the influent pump.
 #define RELAY2           4  // Arduino pin tied to relay2 pin of the washer1 pump.
 #define RELAY3           5  // Arduino pin tied to relay3 pin of the washer2 pump.
-#define RELAY4           6  // Arduino pin tied to relay4 pin of the second pump.
+#define RELAY4           6  // Arduino pin tied to relay4 pin of the vermibed pump.
+#define RELAY5           7  // Arduino pin tied to relay5 pin of the soda ash pump.
 #define TURBIDITY1_PIN  A0 // Arduino pin tied to turbidity1 sensor.
 #define TURBIDITY2_PIN  A1 // Arduino pin tied to turbidity2 sensor.
 #define PH_SENSOR1_PIN  A2 // Arduino pin tied to ph1 sensor.
@@ -36,7 +37,7 @@ int turbidityUnit1 = 0, turbidityUnit2 = 0;
 int moistureValue = 0;
 unsigned int pHCalibrationValueAddress = 0;
 float pHUnit1 = 0, pHUnit2 = 0, temperature = 0;
-OneWire ds(TEMP_PIN);
+OneWire ds(TEMPERATURE_PIN);
 Servo myservo1, myservo2;
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing
 NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE);
@@ -48,10 +49,14 @@ void setup() {
   pinMode(RELAY2, OUTPUT);
   pinMode(RELAY3, OUTPUT);
   pinMode(RELAY4, OUTPUT);
+  pinMode(RELAY5, OUTPUT);
   myservo1.attach(44); //Attach servo1 to pin 44.
   myservo2.attach(46); //Attach servo2 to pin 46.
   relay1_On(); //Pump water to influent container.
-  relay2_On(); //Pump cleaning water to pH sensor.
+  relay2_On(); //Pump cleaning water to pH input sensor.
+  relay3_On(); //Pump cleaning water to pH output sensor.
+  relay4_Off(); //Standby for vermibed pump.
+  relay5_Off(); //Standby for soda ash pump.
 }
 
 // LOOP
@@ -182,7 +187,7 @@ float temp_Read() {
   }
 
   if ( OneWire::crc8( addr, 7) != addr[7]) {
-    //Serial.println("CRC is not valid!");
+    //Serial.print("CRC is not valid!");
     return -1000;
   }
 
@@ -254,6 +259,14 @@ void relay4_Off() {
   digitalWrite(RELAY4, LOW);
 }
 
+void relay5_On() {
+  digitalWrite(RELAY5, HIGH);
+}
+
+void relay5_Off() {
+  digitalWrite(RELAY5, LOW);
+}
+
 void servo1_Expand() {
   myservo1.write(90);
 }
@@ -296,13 +309,14 @@ void pump_Effluent() {
   }
 }
 
-//void dilute() {
-//  if(pHUnit1 < 6.00){
-//
-//  } else {
-//
-//  }
-//}
+void dilute() {
+  pH1_Read();
+  if(pHUnit1 < 6.00){
+    relay5_On();
+  } else {
+    relay5_Off();
+  }
+}
 
 //For pH Sensor
 double avergearray(int* arr, int number) {
