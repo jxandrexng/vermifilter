@@ -1,9 +1,44 @@
+from pyfirmata import Arduino, util
 from tkinter import font
 from tkinter import *
-from time import sleep
-#import serial
+from tkinter import ttk
+import time, threading
+import serial
 
 root = Tk()
+
+##board = Arduino('/dev/ttyACM0')
+##it = util.Iterator(board)
+##it.start()
+##
+##ph_a2 = board.get_pin('a:2:o')
+##ph_a3 = board.get_pin('a:3:o')
+##turb_a0 = board.get_pin('a:0:o')
+##turb_a1 = board.get_pin('a:1:o')
+##vol_d1 = board.get_pin('d:11:o')
+##vol_d2 = board.get_pin('d:9:o')
+##temp_a5 = board.get_pin('a:5:o')
+##moist_a4 = board.get_pin('a:4:o')
+##
+##in_ph = StringVar(ph_a2.read())
+##out_ph = StringVar(ph_a3.read())
+##in_turb = StringVar(turb_a0.read())
+##out_turb = StringVar(turb_a1.read())
+##in_vol = StringVar(vol_d1.read())
+##out_vol = StringVar(vol_d2.read())
+##temperature = StringVar(temp_a5.read())
+##soil_moisture = StringVar(moist_a4.read())
+##
+##print(ph_a2)
+
+##ser = serial.Serial('/dev/ttyACM1', baudrate=9600, timeout=10,
+##                    parity=serial.PARITY_NONE,
+##                    stopbits=serial.STOPBITS_ONE,
+##                    bytesize=serial.EIGHTBITS
+##                    )
+
+#def check_serial_event():
+    
 
 def update_clock():
     now = time.strftime("%H:%M:%S")
@@ -16,20 +51,33 @@ def autosave_30():
     #If 30 seconds, save the currennt value in the entry to the database
 
 ##Serial Monitor Output
-##def update_values(event = None):
+def update_values():
+##    global ser
 ##    ser = serial.Serial('/dev/ttyACM0', 9600)
 ##
-##    while 1:
-##        values = ser.readline()
+##    line = ser.readline().strip()
+##    values = line.decode('ascii').split(" ")
+##    ph1, ph2,
+##    turb1, turb2,
+##    vol1, vol2,
+##    temp, soil = [float(s) for s in values]
 ##        
-##        out_ph = values.split(" ")[0]
-##        out_turb = values.split(" ")[1]
-##        out_vol = values.split(" ")[2]
-##        in_ph = values.split(" ")[3]
-##        in_turb = values.split(" ")[4]
-##        in_vol = values.split(" ")[5]
 ##    ser.close()
+    arduino = serial.Serial('/dev/ttyACM1', 9600)
+ 
+    while 1:
+        values = arduino.readline().decode()
+        ph1 = values.split(" ")[0]
+        ph2 = values.split(" ")[1]
+        turb1 = values.split(" ")[2]
+        turb2 = values.split(" ")[3]
+        vol1 = values.split(" ")[4]
+        vol2 = values.split(" ")[5]
+        temp = values.split(" ")[6]
+        soil_moist = values.split(" ")[7]
+    arduino.close()
 
+    
 #Fonts
 helv36 = font.Font(family = "Helvetica", size = 36, weight = "bold")
 helv24 = font.Font(family = "Helvetica", size = 18, weight = "bold")
@@ -106,6 +154,7 @@ input_volume_value = Entry(left_frame, font=helv18, width=4)
 
 #Labels-Values for Output Container
 output_container_label = Label(right_frame, text="Output Container", font=helv24)
+
 output_ph = Label(right_frame, text="pH Level:", font=helv18)
 output_ph_value = Entry(right_frame, font=helv18, width=4)
 
