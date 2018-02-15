@@ -1,4 +1,3 @@
-from pyfirmata import Arduino, util
 from tkinter import font
 from tkinter import *
 from tkinter import ttk
