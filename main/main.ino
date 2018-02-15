@@ -61,17 +61,20 @@ void setup() {
 
 // LOOP
 void loop() {
-    pH1_Print();
-    turbidity1_Print();
-    volume1_Print();
-    pH2_Print();
-    turbidity2_Print();
-    volume2_Print();
-    pump_Influent();
-    pump_Effluent();
-    temp_Print();
-    moisture_Print();
+  pH1_Print();
+  turbidity1_Print();
+  volume1_Print();
+  pH2_Print();
+  turbidity2_Print();
+  volume2_Print();
+  temp_Print();
+  moisture_Print();
+  distance1_Print();
+  distance2_Print();
   Serial.print("\n");
+  pump_Influent();
+  pump_Effluent();
+  pump_Vermibed();
 }
 
 int distance1_Read() {
@@ -151,8 +154,8 @@ void turbidity2_Print() {
 }
 
 int moisture_Read() {
-  moistureValue = analogRead(MOISTURE_PIN); 
-  moistureValue = map(moistureValue,531,263,0,100);
+  moistureValue = analogRead(MOISTURE_PIN);
+  moistureValue = map(moistureValue, 531, 263, 0, 100);
   return moistureValue;
 }
 
@@ -297,6 +300,16 @@ void pump_Influent() {
   }
 }
 
+void pump_Vermibed() {
+  distance1_Read();
+  //Do logic that pumps water to vermibed while influent container is not empty without disrupting other functions.
+  relay4_On(); //Turn on vermibed pump.
+  //Add timer interval that reads soil moisture.
+  if (distance1 == containerHeight) {
+    relay4_Off();
+  }
+}
+
 void pump_Effluent() {
   distance2_Read();
   if (distance2 <= waterLimit) { //If effluent water level is nearly full, execute the following:
@@ -311,7 +324,7 @@ void pump_Effluent() {
 
 void dilute() {
   pH1_Read();
-  if(pHUnit1 < 6.00){
+  if (pHUnit1 < 6.00) {
     relay5_On();
   } else {
     relay5_Off();
