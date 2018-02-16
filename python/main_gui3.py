@@ -3,21 +3,7 @@ from tkinter import font
 from tkinter import ttk
 import serial
 import time
-import threading
 import Tkinter as tk
-
-#s = serial.Serial('/dev/ttyACM1', 9600)
-
-class SerialThread(threading.Thread):
-    def __init__(self, queue):
-        threading.Thread.__init__(self)
-        self.queue = queue
-    def run(self):
-        s = serial.Serial('/dev/ttyACM0', 9600)
-        while True:
-            if s.inWaiting():
-                text = s.readline(s.inWaiting())
-                self.queue.put(text)
 
 class Vermifilter(object):
     def __init__(self):
