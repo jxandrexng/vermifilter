@@ -6,6 +6,43 @@ import time
 import Tkinter as tk
 
 class Vermifilter(object):
+
+    def measure(self):
+        data = ser.readline()
+
+        if (data != " "):
+            try:
+                processed_data = data.split(" ")
+
+                self.input_ph_data.set(str(processed_data[0]))
+                self.input_ph_value.grid(row=6, column=2, sticky=W)
+
+                self.input_turb_data.set(str(processed_data[1]))
+                self.input_turb_value.grid(row=7, column=2, sticky=W)
+                
+                self.input_volume_data.set(str(processed_data[2]))
+                self.input_volume_value.grid(row=8, column=2, sticky=W)
+
+                
+                self.output_ph_data.set(str(processed_data[3]))
+                self.output_ph_value.grid(row=6, column=4, sticky=W)
+                
+                self.output_turb_data.set(str(processed_data[4]))
+                self.output_turb_value.grid(row=7, column=4, sticky=W)
+                
+                self.output_volume_data.set(str(processed_data[5]))
+                self.output_volume_value.grid(row=8, column=4, sticky=W)
+                
+                self.temperature_data.set(str(processed_data[6]))
+                self.temperature_value.grid(row=9, column=2, sticky=W)
+                
+                self.soil_moisture_data.set(str(processed_data[7]))
+                self.soil_moisture_value.grid(row=10, column=2, sticky=W)
+
+            except IndexError:
+                pass
+
+    
     def __init__(self):
         self.root = Tk()
 
@@ -81,10 +118,10 @@ class Vermifilter(object):
         self.output_container_label = Label(self.right_frame, text="Output Container", font=self.helv24)
 
         self.output_ph = Label(self.right_frame, text="pH Level:", font=self.helv18)
-        self.output_ph_value = Entry(self.right_frame, font=self.helv18, width=4)
+        self.output_ph_value = Entry(self.right_frame, textvariable=input_ph_data, font=self.helv18, width=4)
 
         self.output_turb = Label(self.right_frame, text="Turbidity Level:", font=self.helv18)
-        self.output_turb_value = Entry(self.right_frame, font=self.helv18, width=4)
+        self.output_turb_value = Entry(self.right_frame, textvariable=input_turb_data, font=self.helv18, width=4)
 
         self.output_volume = Label(self.right_frame, text="Volume:", font=self.helv18)
         self.output_volume_value = Entry(self.right_frame, font=self.helv18, width=4)
@@ -146,12 +183,9 @@ class Vermifilter(object):
         self.left_frame.pack(side=LEFT, ipady=120)
         self.right_frame.pack(side=RIGHT, ipady=120)
         self.bot_frame.pack(side=BOTTOM, ipady=50)
+        self.measure()
         self.root.mainloop()
-
-##    def process_serial(self):
-##        while self.queue.qsize():
-##            try:
-##                self.text.delete()
+        
 
 
 if __name__ == "__main__":

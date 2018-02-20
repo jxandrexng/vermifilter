@@ -163,10 +163,10 @@ class Application(Frame):
 ##        self.helv18 = font.Font(family = "Helvetica", size = 12, weight = "normal")
 ##        self.helv12 = font.Font(family = "Helvetica", size = 12, weight = "normal")
 
-        self.top_frame = Frame(self.root)
-        self.left_frame = Frame(self.root, bd=10)
-        self.right_frame = Frame(self.root, bd=10)
-        self.bot_frame = Frame(self.root, bd=10)
+        self.top_frame = Frame(self)
+        self.left_frame = Frame(self, bd=10)
+        self.right_frame = Frame(self, bd=10)
+        self.bot_frame = Frame(self, bd=10)
         
         self.input_ph_data = StringVar()
         self.input_turb_data = StringVar()
@@ -181,7 +181,7 @@ class Application(Frame):
         self.grid()
         self.measure()
 
-app = Application(master = root)
+app = Application(master=root)
 app.master.title('Automated Vermifiltration System')
 app.master.resizable(width=False, height=False)
 app.master.geometry('{}x{}'.format(720, 480))
