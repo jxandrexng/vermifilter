@@ -14,6 +14,7 @@
 #define RELAY3           5  // Arduino pin tied to relay3 pin of the washer2 pump.
 #define RELAY4           6  // Arduino pin tied to relay4 pin of the vermibed pump.
 #define RELAY5           7  // Arduino pin tied to relay5 pin of the soda ash pump.
+#define LEVEL_PIN       22  // Arduino pin tied to level pin of the soda ash container.
 #define TURBIDITY1_PIN  A0 // Arduino pin tied to turbidity1 sensor.
 #define TURBIDITY2_PIN  A1 // Arduino pin tied to turbidity2 sensor.
 #define PH_SENSOR1_PIN  A2 // Arduino pin tied to ph1 sensor.
@@ -30,12 +31,14 @@
 
 
 // DECLARATION
+int sodaLevel;
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback
 int pHArrayIndex = 0;
 int distance1, distance2, pos = 0;
 int turbidityUnit1 = 0, turbidityUnit2 = 0;
 int moistureValue = 0;
 unsigned int pHCalibrationValueAddress = 0;
+unsigned long interval = 1000, previousMillis = 0;
 float pHUnit1 = 0, pHUnit2 = 0, temperature = 0;
 OneWire ds(TEMPERATURE_PIN);
 Servo myservo1, myservo2;
@@ -50,6 +53,7 @@ void setup() {
   pinMode(RELAY3, OUTPUT);
   pinMode(RELAY4, OUTPUT);
   pinMode(RELAY5, OUTPUT);
+  pinMode(LEVEL_PIN, INPUT);
   myservo1.attach(44); //Attach servo1 to pin 44.
   myservo2.attach(46); //Attach servo2 to pin 46.
   relay1_On(); //Pump water to influent container.
@@ -61,6 +65,8 @@ void setup() {
 
 // LOOP
 void loop() {
+  unsigned long currentMillis = millis();
+  if ((unsigned long)(currentMillis - previousMillis) >= interval){
   pH1_Print();
   turbidity1_Print();
   volume1_Print();
@@ -69,9 +75,9 @@ void loop() {
   volume2_Print();
   temp_Print();
   moisture_Print();
-  distance1_Print();
-  distance2_Print();
   Serial.print("\n");
+  previousMillis = millis();
+  }
   pump_Influent();
   pump_Effluent();
   pump_Vermibed();
@@ -284,6 +290,15 @@ void servo2_Expand() {
 
 void servo2_Retract() {
   myservo2.write(0);
+}
+
+void sodaLevel_Read() {
+  sodaLevel = digitalRead(LEVEL_PIN);
+  if(sodaLevel = HIGH){
+    
+  } else {
+    
+  }
 }
 
 void pump_Influent() {
