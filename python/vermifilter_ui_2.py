@@ -1,6 +1,6 @@
 import time
 import serial
-from Tkinter import Tk, Frame, LabelFrame, Label, Button, Entry, StringVar, N, E, S, W
+from Tkinter import *
 
 serial_speed = 9600
 serial_port = '/dev/ttyACM0'
@@ -12,7 +12,7 @@ HELV24 = ("Helvetica", 18, "bold")
 HELV18 = ("Helvetica", 12, "normal")
 HELV12 = ("Helvetica", 12, "normal")
 
-class VermifilterUI(object):
+class Application(Frame):
 
     def measure(self):
 
@@ -22,57 +22,79 @@ class VermifilterUI(object):
             try:
                 processed_data = data.split(" ")
 
+           ##     self.ph_input_data.set("pH Input: " + str(processed_data[0]))
+##                self.ph_input.pack()
+##
+##                self.turb_input_data.set("Turbidity Input: " + str(processed_data[1]))
+##                self.turb_input.pack()
+##
+##                self.vol_input_data.set("Volume Input: " + str(processed_data[2]))
+##                self.vol_input.pack()
+
                 self.ph_input_value.set(str(processed_data[0]))
-                
+                self.ph_input.grid(row=0, column=0, sticky=E)
+
                 self.turb_input_value.set(str(processed_data[1]))
+                self.turb_treated.grid(row=2, column=0, sticky=E)
                 
                 self.vol_input_value.set(str(processed_data[2]))
-                
+                self.vol_output_value.grid(row=2, column=1)
+
                 self.ph_output_value.set(str(processed_data[3]))
+                self.ph_output_value.grid(row=0, column=1)
                 
                 self.turb_output_value.set(str(processed_data[4]))
-                
+                self.turb_output_value.grid(row=1, column=1)
+
                 self.vol_output_value.set(str(processed_data[5]))
-                
+                self.vol_input_value.grid(row=2, column=1)
+
                 self.temperature_value.set(str(processed_data[6]))
-                
+                self.temperature_value.grid(row=0, column=1, sticky=E)
+
                 self.soil_moisture_value.set(str(processed_data[7]))
-                
+                self.soil_moisture_value.grid(row=1, column=1, sticky=E)
+
 
             except IndexError:
                 pass
 
         self.after(1000, self.measure)
 
-    def reset(self):
-        global timer
-        self.timer = [0, 0, 0]
-        timeText.configure(text='00:00:00')
-        
-    def exist(self):
-        root.destroy()    
+    def createWidgets(self):
+##        self.ph_input = Label(self, textvariable=self.ph_input_value, font=('Verdana', 20, 'bold'))
+##        self.ph_input_value.set("pH Input")
+##        self.ph_input.pack()
+##
+##        self.turb_input = Label(self, textvariable=self.turb_input_value, font=('Verdana', 20, 'bold'))
+##        self.turb_input_value.set("Turbidity Input")
+##        self.turb_input.pack()
+##
+##        self.vol_input = Label(self, textvariable=self.vol_input_value, font=('Verdana', 20, 'bold'))
+##        self.vol_input_value.set("Volume Input")
+##        self.vol_input.pack()
+##
+##        self.ph_output = Label(self, textvariable=self.ph_output_value, font=('Verdana', 20, 'bold'))
+##        self.ph_output_value.set("pH Output")
+##        self.ph_output.pack()
+##
+##        self.turb_output = Label(self, textvariable=self.turb_output_value, font=('Verdana', 20, 'bold'))
+##        self.turb_output_value.set("Turbidity Output")
+##        self.turb_output.pack()
+##
+##        self.vol_output = Label(self, textvariable=self.vol_output_value, font=('Verdana', 20, 'bold'))
+##        self.vol_output_value.set("Volume Output")
+##        self.vol_output.pack()
+##
+##        self.temperature = Label(self, textvariable=self.temperature_value, font=('Verdana', 20, 'bold'))
+##        self.temperature_value.set("Temperature")
+##        self.temperature.pack()
+##
+##        self.soil_moisture = Label(self, textvariable=self.soil_moisture_value, font=('Verdana', 20, 'bold'))
+##        self.soil_moisture_value.set("Soil Moisture")
+##        self.soil_moisture.pack()
 
-    def shutdown(self):
-        os.system("sudo shutdown -h now")
-
-    def __init__(self, master):
-        self.ph_input_value = StringVar()
-        self.turb_input_value = StringVar()
-        self.vol_input_value = StringVar()
-        self.ph_output_value = StringVar()
-        self.turb_output_value = StringVar()
-        self.vol_output_value = StringVar()
-        self.temperature_value = StringVar()
-        self.soil_moisture_value = StringVar()
-
-        self.measure()
-        
-        self.master = master
-        master.title("VERMIFILTER UI")
-        master.resizable(width=False, height=False)
-        master.geometry('{}x{}'.format(720, 480))
-
-        center_frame = Frame(master, width=720, height=480)
+        center_frame = Frame(self, width=720, height=480)
         center_frame.pack(fill="both", expand=True)
         center_frame.place(anchor="c", relx=.5, rely=.5)
 
@@ -96,9 +118,6 @@ class VermifilterUI(object):
 
         time_flow_shut_frame = LabelFrame(center_frame, pady=20, padx=20)
         time_flow_shut_frame.grid(row=2, column=5, columnspan=2)
-
-##        self.timer = [0, 0, 0]
-##        self.pattern = '{0:02d}:{1:02d}:{2:02d}'
         
         #Untreated Water Frame
         self.ph_untreated = Label(untreated_water_frame, text="pH Level:", font=HELV18)
@@ -185,9 +204,27 @@ class VermifilterUI(object):
         self.flowrate.grid(row=1, column=0, columnspan=2)
         self.shutdown.grid(row=2, column=0, columnspan=2)
 
-
-##state = False
+    def __init__(self, master=None):
+        Frame.__init__(self, master)
+        
+        self.ph_input_value = StringVar()
+        self.turb_input_value = StringVar()
+        self.vol_input_value = StringVar()
+        self.ph_output_value = StringVar()
+        self.turb_output_value = StringVar()
+        self.vol_output_value = StringVar()
+        self.temperature_value = StringVar()
+        self.soil_moisture_value = StringVar()
+        self.createWidgets()
+        self.pack()
+        self.grid()
+        self.measure()
 
 root = Tk()
-my_gui = VermifilterUI(root)
-root.mainloop()
+app = Application(master=root)
+
+root.title("VERMIFILTER UI")
+root.resizable(width=False, height=False)
+root.geometry('{}x{}'.format(720, 480))
+
+app.mainloop()
