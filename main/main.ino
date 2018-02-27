@@ -37,6 +37,7 @@ int pHArrayIndex = 0;
 int distance1, distance2, pos = 0;
 int turbidityUnit1 = 0, turbidityUnit2 = 0;
 int moistureValue = 0;
+int incoming;
 unsigned int pHCalibrationValueAddress = 0;
 unsigned long interval = 1000, previousMillis = 0;
 float pHUnit1 = 0, pHUnit2 = 0, temperature = 0;
@@ -66,21 +67,44 @@ void setup() {
 // LOOP
 void loop() {
   unsigned long currentMillis = millis();
-  if ((unsigned long)(currentMillis - previousMillis) >= interval){
-  pH1_Print();
-  turbidity1_Print();
-  volume1_Print();
-  pH2_Print();
-  turbidity2_Print();
-  volume2_Print();
-  temp_Print();
-  moisture_Print();
-  Serial.print("\n");
-  previousMillis = millis();
+  if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+    pH1_Print();
+    turbidity1_Print();
+    volume1_Print();
+    pH2_Print();
+    turbidity2_Print();
+    volume2_Print();
+    temp_Print();
+    moisture_Print();
+    Serial.print("\n");
+    previousMillis = millis();
   }
-  pump_Influent();
-  pump_Effluent();
-  pump_Vermibed();
+  if (Serial.available() > 0) {
+    incoming = Serial.read();
+  }
+  if (incoming == 1) {
+    pump_Effluent();
+    pump_Vermibed();
+  } else if (incoming == 2) {
+    pump_Soda();
+  } else if (incoming == 3) {
+    pump_Influent();
+  } else if (incoming == 4) {
+    stop_All();
+  } else if (incoming == 5) { //Add delay
+    pump_Vermibed();
+  } else if (incoming == 6) { //Decrease delay
+    pump_Vermibed();
+  }
+
+}
+
+void stop_All() {
+  relay1_Off;
+  relay2_Off;
+  relay3_Off;
+  relay4_Off;
+  relay5_Off;
 }
 
 int distance1_Read() {
@@ -292,12 +316,12 @@ void servo2_Retract() {
   myservo2.write(0);
 }
 
-void sodaLevel_Read() {
+void pump_Soda() {
   sodaLevel = digitalRead(LEVEL_PIN);
-  if(sodaLevel = HIGH){
-    
+  if (sodaLevel = HIGH) {
+    relay5_On();
   } else {
-    
+    relay5_Off();
   }
 }
 
