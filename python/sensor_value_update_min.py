@@ -6,7 +6,7 @@ from Tkinter import *
 
 #connection of serial port to arduino
 serial_speed = 9600
-serial_port = '/dev/ttyACM0'
+serial_port = '/dev/ttyACM1'
 
 ser = serial.Serial(serial_port, serial_speed, timeout=1)
 
@@ -58,11 +58,16 @@ class Application(Frame):
             self.Treated_label_name = StringVar()
             self.Breakline_label_name = StringVar()
             self.btn_dispense_speed = StringVar()
+            self.timeText = StringVar()
             
             self.frame()
             self.createWidgets()
             self.pack()
             self.measure()
+            self.running = False
+            self.timer = [0,0,0,0]    # [minutes ,seconds, centiseconds]
+            self.timeString = str(self.timer[0]) + ':' + str(self.timer[1]) + ':' + str(self.timer[2]) + ':' + str(self.timer[3])
+            self.update_time()
     
     def frame(self):
         #setting frame
@@ -75,8 +80,8 @@ class Application(Frame):
         self.f4 = Frame(self, width = 190, height = 235, relief=SUNKEN, bd=10)
         self.f4.grid(row=2, column=2)
 
-        self.f4a = Frame(self, width = 180, height = 235, relief="raise", bd=5)
-        self.f4a.grid(row=2, column=2)
+        self.f4a = Frame(self, width = 100, height = 235, relief="raise", bd=5, pady=10)
+        self.f4a.grid(row=2, column=2, ipadx=1)
 
         self.f5 = Frame(self, width = 590, height = 75, relief=SUNKEN, bd=10)
         self.f5.grid(row=3, column=0)
@@ -167,7 +172,7 @@ class Application(Frame):
                 #===========================2nd Frame Container========================================
                 #Untreated
                 self.Untreated_label_name.set("Untreated Water")
-                self.Untreated_label.grid(row=0, column=0, columnspan=2)
+                self.Untreated_label.grid(row=1, column=0, columnspan=2)
                 
                 #Nph input
                 self.Nph_input_label_name.set("Ph Input: ")
@@ -308,32 +313,106 @@ class Application(Frame):
         
         self.Nturb_output = Label(self.f4a, text="212", font=HELV10)
 
+        #timer
+        self.show = Label(self.f4a, text='00:00:00:00', font=('Helvetica', 15))
+        self.show.grid(row=0, column=0, columnspan=2)
+
+        
+
+        #Soda Ash Level
+        self.soda_ash = Label(self.f4a, text="Ash Level:", font=HELV12)
+        self.soda_ash.grid(row=9, column=0)
+
+        self.soda_ash_data = Label(self.f4a, text="Low", font=HELV12)
+        self.soda_ash_data.grid(row=9,column=1)
 
         #===============================Buttons 3rd Container=======================
         #Button Pump
-        self.btn_pump = Button(self.f5a, text="Pump", bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=0)
+        self.btn_pump = Button(self.f5a, text="Pump", command=self.pump, bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=0)
 
         #Button ADD Soda
-        self.btn_add_soda = Button(self.f5a, text="Add Soda", bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=1)
+        self.btn_add_soda = Button(self.f5a, text="Add Soda", command=self.add_soda, bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=1)
 
         #Button Dispense
-        self.btn_dispense = Button(self.f5a, text="Dispense", bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=2)
+        self.btn_dispense = Button(self.f5a, text="Dispense", command=self.start, bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=2)
 
         #Button Stop
-        self.btn_stop = Button(self.f5a, text="Stop", bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=3)
+        self.btn_stop = Button(self.f5a, text="Stop", bd=8, command=self.pause, font=HELV12, padx=5, pady=5).grid(row=0,column=3)
 
         #Button Shutdown
         self.btn_shutdown = Button(self.f5a, text="Shutdown", bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=4)
 
         #=======================Button 4th container======================
         #Button -
-        self.btn_plus = Button(self.f6a, text="-", bd=3, font=HELV12, padx=8, pady=6).grid(row=0, column=0)
+        self.btn_minus = Button(self.f6a, text="-", command=self.decrease_delay, bd=3, font=HELV12, padx=8, pady=6).grid(row=0, column=0)
 
         #Button +
-        self.btn_plus = Button(self.f6a, text="+", bd=3, font=HELV12, padx=5, pady=6).grid(row=0, column=1)
+        self.btn_plus = Button(self.f6a, text="+", command=self.increase_delay, bd=3, font=HELV12, padx=5, pady=6).grid(row=0, column=1)
 
         #Speed
         self.btn_dispense_speed = Label(self.f6a, text="123", font=HELV12).grid(row=0, column=2)
+
+
+    #================================ Timer =============================
+    def update_time(self):
+
+        if (self.running == True):      #Clock is running
+
+            self.timer[3] += 1
+
+            if (self.timer[3] >= 100):  #100 centiseconds --> 1 second
+                self.timer[3] = 0
+                self.timer[2] += 1      #add 1 second
+
+            if (self.timer[2] >= 60):   #60 seconds --> 1 minute
+                self.timer[1] += 1
+                self.timer[2] = 0
+
+            if (self.timer[1] >= 60):
+                self.timer[0] += 1
+                self.timer[1] = 0
+
+            self.timeString = str(self.timer[0]) + ':' + str(self.timer[1]) + ':' + str(self.timer[2]) + ':' + str(self.timer[3])
+            self.show.config(text=self.timeString)
+        root.after(10, self.update_time)
+
+
+    def start(self):            #Start the clock
+        self.running = True
+        ser.write("3")
+        print 'Clock Running...'
+
+    def pause(self):            #Pause the clock
+        self.running = False
+        ser.write("4")
+        print 'Clock Paused'    
+
+    def resetTime(self):        #Reset the clock
+        self.running = False
+        self.timer = [0,0,0,0]
+        print 'Clock is Reset'  
+        self.show.config(text='00:00:00:00')
+
+    def quit(self):             #Quit the program
+        root.destroy()
+
+    #=============================Functions=============================
+    def pump(self):
+        ser.write("1")
+        print 'Pump'
+
+    def add_soda(self):
+        ser.write("2")
+        print 'Add Soda'
+
+    def decrease_delay(self):
+        ser.write("5")
+        print 'Delay Decreased'
+        
+    def increase_delay(self):
+        ser.write("6")
+        print 'Delay Increased'
+
 root = Tk()
 app = Application(master=root)
 root.mainloop()
