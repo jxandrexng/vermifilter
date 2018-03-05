@@ -28,44 +28,58 @@
 #define Offset2          0.00  //Deviation compensate for pH Sensor2.
 #define ArrayLength     40 // Times of collection for pH values.
 
-
-
 // DECLARATION
-int sodaLevel;
+int sodaLevel; //Store the binary value for soda ash level
+int initStatus; //Store initialization status
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback
 int pHArrayIndex = 0;
 int distance1, distance2, pos = 0;
 int turbidityUnit1 = 0, turbidityUnit2 = 0;
 int moistureValue = 0;
-int incoming;
+char incoming; //Incoming value for serial
 unsigned int pHCalibrationValueAddress = 0;
 unsigned long interval = 1000, previousMillis = 0;
 float pHUnit1 = 0, pHUnit2 = 0, temperature = 0;
 OneWire ds(TEMPERATURE_PIN);
 Servo myservo1, myservo2;
-NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing
-NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE);
+NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing1
+NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing2
 
 // SETUP
 void setup() {
-  Serial.begin(9600); // Open serial monitor at 9600 baud to see ping results
-  pinMode(RELAY1, OUTPUT);
-  pinMode(RELAY2, OUTPUT);
-  pinMode(RELAY3, OUTPUT);
-  pinMode(RELAY4, OUTPUT);
-  pinMode(RELAY5, OUTPUT);
-  pinMode(LEVEL_PIN, INPUT);
-  myservo1.attach(44); //Attach servo1 to pin 44.
-  myservo2.attach(46); //Attach servo2 to pin 46.
-  relay1_On(); //Pump water to influent container.
-  relay2_On(); //Pump cleaning water to pH input sensor.
-  relay3_On(); //Pump cleaning water to pH output sensor.
-  relay4_Off(); //Standby for vermibed pump.
-  relay5_Off(); //Standby for soda ash pump.
+  Serial.begin(9600); //Begin serial transmission at 9600 Baud rate
+  initF();
 }
 
 // LOOP
 void loop() {
+  main_printF();
+  if (Serial.available() > 0) {
+    incoming = Serial.read(); //Read transmitted input from Raspberry Pi
+    if(incoming == '1' && initStatus == 0) { //Receive incoming byte equal to 1 to initialize components
+      init_Relays();
+      initStatus = 1;
+    }
+    else if(incoming == '2' && initStatus == 1) { //Receive incoming byte equal to 2 to stop relays
+      initStatus = 0;
+      stop_Relays();
+    }
+  }
+  mainF();
+}
+
+void initF() {
+  pinMode(RELAY1, OUTPUT); //Set relay1 as output.
+  pinMode(RELAY2, OUTPUT); //Set relay2 as output.
+  pinMode(RELAY3, OUTPUT); //Set relay3 as output.
+  pinMode(RELAY4, OUTPUT); //Set relay4 as output.
+  pinMode(RELAY5, OUTPUT); //Set relay5 as output.
+  pinMode(LEVEL_PIN, INPUT); //Set level pin as input.
+  myservo1.attach(44); //Attach servo1 to pin 44.
+  myservo2.attach(46); //Attach servo2 to pin 46.
+}
+
+void main_printF() {
   unsigned long currentMillis = millis();
   if ((unsigned long)(currentMillis - previousMillis) >= interval) {
     pH1_Print();
@@ -76,35 +90,35 @@ void loop() {
     volume2_Print();
     temp_Print();
     moisture_Print();
+    soda_Print();
     Serial.print("\n");
     previousMillis = millis();
   }
-  if (Serial.available() > 0) {
-    incoming = Serial.read();
-  }
-  if (incoming == 1) {
-    pump_Effluent();
-    pump_Vermibed();
-  } else if (incoming == 2) {
-    pump_Soda();
-  } else if (incoming == 3) {
-    pump_Influent();
-  } else if (incoming == 4) {
-    stop_All();
-  } else if (incoming == 5) { //Add delay
-    pump_Vermibed();
-  } else if (incoming == 6) { //Decrease delay
-    pump_Vermibed();
-  }
-
 }
 
-void stop_All() {
-  relay1_Off;
+void mainF() {
+    pump_Effluent();
+    pump_Vermibed();
+    pump_Soda();
+    pump_Influent();
+    pump_Vermibed();
+    pump_Vermibed();
+}
+
+void stop_Relays() {
+  relay1_Off; 
   relay2_Off;
   relay3_Off;
   relay4_Off;
   relay5_Off;
+}
+
+void init_Relays() {
+  relay1_On(); //Pump water to influent container.
+  relay2_On(); //Pump cleaning water to pH input sensor.
+  relay3_On(); //Pump cleaning water to pH output sensor.
+  relay4_Off(); //Standby for vermibed pump.
+  relay5_Off(); //Standby for soda ash pump.
 }
 
 int distance1_Read() {
@@ -196,12 +210,14 @@ void moisture_Print() {
 }
 
 void volume1_Print() {
+  distance1_Read();
   float waterVolume1 = ((30.0 - distance1) * (30.0 * 40.0) / (30.0 * 30.0 * 40.0)) * 100.0;
   Serial.print(waterVolume1);
   Serial.print(" ");
 }
 
 void volume2_Print() {
+  distance2_Read();
   float waterVolume2 = ((30.0 - distance2) * (30.0 * 40.0) / (30.0 * 30.0 * 40.0)) * 100.0;
   Serial.print(waterVolume2);
   Serial.print(" ");
@@ -314,6 +330,16 @@ void servo2_Expand() {
 
 void servo2_Retract() {
   myservo2.write(0);
+}
+
+void soda_Print() {
+  sodaLevel = digitalRead(LEVEL_PIN);
+  if(sodaLevel == 1) {
+  Serial.print("OKAY");
+  } else {
+    Serial.print("LOW");
+  }
+  
 }
 
 void pump_Soda() {
