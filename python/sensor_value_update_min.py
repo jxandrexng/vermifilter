@@ -66,6 +66,7 @@ class Application(Frame):
             self.turb_saved_data = StringVar()
             self.Nturb_saved_data = StringVar()
             self.timeInterval = IntVar()
+            self.soda_ash_data = StringVar()
             
             self.frame()
             self.createWidgets()
@@ -76,6 +77,7 @@ class Application(Frame):
             self.timeString = str(self.timer[0]) + ':' + str(self.timer[1]) + ':' + str(self.timer[2]) + ':' + str(self.timer[3])
             self.update_time()
             self.time()
+##            self.soda_measure()
            
     
     def frame(self):
@@ -98,13 +100,13 @@ class Application(Frame):
         self.f4 = Frame(self, width = 190, height = 235, relief=SUNKEN, bd=10)
         self.f4.grid(row=2, column=2)
 
-        self.f4a = Frame(self, width = 150, height = 235, relief="raise", bd=5, pady=10, bg="white")
+        self.f4a = Frame(self, width = 160, height = 235, relief="raise", bd=5, pady=10, padx=1, bg="white")
         self.f4a.grid(row=2, column=2, ipadx=1)
 
         self.f5 = Frame(self, width = 610, height = 75, relief=SUNKEN, bd=10)
         self.f5.grid(row=3, column=0)
 
-        self.f5a = Frame(self, width = 580, height = 70, relief="raise", bd=5, padx=77, bg="cyan")
+        self.f5a = Frame(self, width = 580, height = 70, relief="raise", bd=5, padx=40, bg="cyan")
         self.f5a.grid(row=3, column=0)
 
         self.f6 = Frame(self, width = 190, height = 75, relief=SUNKEN, bd=10)
@@ -120,7 +122,21 @@ class Application(Frame):
     def output_saved(self):
          self.Nph_saved_data.set(self.ph_output.get())
          self.Nturb_saved_data.set(self.turb_output.get())
-            
+
+##    def soda_measure(self):
+##
+##        data = ser.readline()
+##
+##        if(data != " "):
+##            try:
+##                relay_data = data.split(" ")
+##                
+##                self.soda_ash_data.set(str(relay_data[4]))
+##                self.soda_ash_data.grid(row=9, column=2)
+##            except IndexError:
+##                pass
+##        self.after(1000, self.soda_measure)
+                
     #get the values from the arduino and split and store to the text variable
     def measure(self):
 
@@ -131,9 +147,10 @@ class Application(Frame):
                 processed_data = data.split(" ")
 
 ##                ph_reading = str(processed_data[1]) 
-
-##                if ph_reading < 3:
-##                    self.input_saved()
+##
+##                if self.soda_ash_data.set(str(processed_data[0])) < 3:
+##                    self.soda_ash_data.set("High")
+                
                 
                 #header
                 self.header_frame_label_name.set("Automated Vermifiltration System")
@@ -352,7 +369,7 @@ class Application(Frame):
         self.soda_ash = Label(self.f4a, text="Ash Level:", font=HELV12, bg="white")
         self.soda_ash.grid(row=9, column=0)
 
-        self.soda_ash_data = Label(self.f4a, text="Low", font=HELV12, bg="white")
+        self.soda_ash_data = Label(self.f4a, textvariable=self.soda_ash_data, font=HELV12, bg="white")
         self.soda_ash_data.grid(row=9,column=1)
 
         #===============================Buttons 3rd Container=======================
@@ -366,12 +383,15 @@ class Application(Frame):
         self.btn_start = Button(self.f5a, text="Start", command=self.start, bd=8, font=HELV12, bg="Green2", padx=5, pady=5).grid(row=0,column=2)
 
         #Button Stop
-        self.btn_stop = Button(self.f5a, text="Stop", bd=8, command=self.pause, font=HELV12, bg="red2", padx=5, pady=5).grid(row=0,column=3)
+        self.btn_stop = Button(self.f5a, text="Stop", bd=8, command=self.stop, font=HELV12, bg="red2", padx=5, pady=5).grid(row=0,column=3)
+
+        #Button Reset
+        self.btn_reset = Button(self.f5a, text="Reset", command=self.resetTime, bd=8, bg="DarkGoldenrod1", font=HELV12, padx=5, pady=5).grid(row=0,column=4)
 
         #Button Shutdown
-        self.btn_shutdown = Button(self.f5a, text="Shutdown", command=self.iexit, bd=8, bg="gray70", font=HELV12, padx=5, pady=5).grid(row=0,column=4)
+        self.btn_shutdown = Button(self.f5a, text="Shutdown", command=self.iexit, bd=8, bg="gray70", font=HELV12, padx=5, pady=5).grid(row=0,column=5)
 
-        #=======================Button 4th container======================
+        #=======================Credits 4th container======================
         self.company_name = Label(self.f6a, text=u"\u00A9 JME", font=HELV12, bg="cyan")
         self.company_name.grid(row=0, column=0)
 
@@ -403,12 +423,12 @@ class Application(Frame):
 
     def start(self):            #Start the clock
         self.running = True 
-##        ser.write("3")
+        ser.write("1")
         print 'Clock Running...'
 
-    def pause(self):            #Pause the clock
+    def stop(self):            #Pause the clock
         self.running = False
-##        ser.write("4")
+        ser.write("2")
         print 'Clock Paused'    
 
     def resetTime(self):        #Reset the clock
@@ -416,7 +436,10 @@ class Application(Frame):
         self.timer = [0,0,0,0]
         print 'Clock is Reset'  
         self.show.config(text='00:00:00:00')
-
+        self.ph_saved_data.set("")
+        self.turb_saved_data.set("")
+        self.Nph_saved_data.set("")
+        self.Nturb_saved_data.set("")
 
 
     def time(self):
