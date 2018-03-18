@@ -1,4 +1,3 @@
-#include <EEPROM.h>
 #include <NewPing.h> //Ultrasonic Sensor Library
 #include <Servo.h>
 #include <OneWire.h>
@@ -9,7 +8,7 @@
 #define TRIGGER2_PIN    10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
 #define ECHO2_PIN        9  // Arduino pin tied to echo pin on the second ultrasonic sensor.
 #define TEMP_PIN         8  // Arduino pin tied to temperature sensor.
-#define RELAY1           3  // Arduino pin tied to relay1 pin of the influent pump.
+#define RELAY1           13  // Arduino pin tied to relay1 pin of the influent pump.
 #define RELAY2           4  // Arduino pin tied to relay2 pin of the washer1 pump.
 #define RELAY3           5  // Arduino pin tied to relay3 pin of the washer2 pump.
 #define RELAY4           6  // Arduino pin tied to relay4 pin of the vermibed pump.
@@ -24,22 +23,26 @@
 #define MAX_DISTANCE   500 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 #define waterLimit      10 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
 #define containerHeight 30 // Height of the container in cm.
-#define Offset1          0.00  //Deviation compensate for pH Sensor1.
-#define Offset2          0.00  //Deviation compensate for pH Sensor2.
-#define ArrayLength     40 // Times of collection for pH values.
+#define Offset1          0.10  //Deviation compensate for pH Sensor1.
+#define Offset2          0.11  //Deviation compensate for pH Sensor2.
+#define ArrayLength1     40 // Times of collection for pH values.
+#define ArrayLength2     40 // Times of collection for pH values.
+
 
 // DECLARATION
 int sodaLevel; //Store the binary value for soda ash level
-int initStatus; //Store initialization status
-int pHArray[ArrayLength];   //Store the average value of the sensor feedback
-int pHArrayIndex = 0;
+boolean initStatus = 0; //Store initialization status
+int pHArray1[ArrayLength1];   //Store the average value of the sensor feedback
+int pHArrayIndex1 = 0;
+int pHArray2[ArrayLength2];   //Store the average value of the sensor feedback
+int pHArrayIndex2 = 0;
 int distance1, distance2, pos = 0;
-int turbidityUnit1 = 0, turbidityUnit2 = 0;
+float turbidityUnit1 = 0, turbidityUnit2 = 0;
 int moistureValue = 0;
 char incoming; //Incoming value for serial
-unsigned int pHCalibrationValueAddress = 0;
 unsigned long interval = 1000, previousMillis = 0;
-float pHUnit1 = 0, pHUnit2 = 0, temperature = 0;
+float pHUnit1 = 0, pHUnit2 = 0, temperature = 0, pHvoltage1, pHvoltage2;
+boolean relay1_Status = 0, relay2_Status = 0, relay3_Status = 0, relay4_Status = 0, relay5_Status = 0;
 OneWire ds(TEMPERATURE_PIN);
 Servo myservo1, myservo2;
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing1
@@ -53,33 +56,6 @@ void setup() {
 
 // LOOP
 void loop() {
-  main_printF();
-  if (Serial.available() > 0) {
-    incoming = Serial.read(); //Read transmitted input from Raspberry Pi
-    if(incoming == '1' && initStatus == 0) { //Receive incoming byte equal to 1 to initialize components
-      init_Relays();
-      initStatus = 1;
-    }
-    else if(incoming == '2' && initStatus == 1) { //Receive incoming byte equal to 2 to stop relays
-      initStatus = 0;
-      stop_Relays();
-    }
-  }
-  mainF();
-}
-
-void initF() {
-  pinMode(RELAY1, OUTPUT); //Set relay1 as output.
-  pinMode(RELAY2, OUTPUT); //Set relay2 as output.
-  pinMode(RELAY3, OUTPUT); //Set relay3 as output.
-  pinMode(RELAY4, OUTPUT); //Set relay4 as output.
-  pinMode(RELAY5, OUTPUT); //Set relay5 as output.
-  pinMode(LEVEL_PIN, INPUT); //Set level pin as input.
-  myservo1.attach(44); //Attach servo1 to pin 44.
-  myservo2.attach(46); //Attach servo2 to pin 46.
-}
-
-void main_printF() {
   unsigned long currentMillis = millis();
   if ((unsigned long)(currentMillis - previousMillis) >= interval) {
     pH1_Print();
@@ -91,10 +67,60 @@ void main_printF() {
     temp_Print();
     moisture_Print();
     soda_Print();
-    Serial.print("\n");
-    previousMillis = millis();
+    Serial.print("\n"); 
+    previousMillis = currentMillis;
+  }
+  
+  if (Serial.available() > 0) {
+    incoming = Serial.read(); //Read transmitted input from Raspberry Pi
+    if(incoming == '1' && !initStatus){
+      relay1_On(); //Pump water to influent container.
+      relay2_On(); //Pump cleaning water to pH input sensor.
+      relay3_On(); //Pump cleaning water to pH output sensor.
+      relay4_Off(); //Standby for vermibed pump.
+      relay5_Off(); //Standby for soda ash pump.
+      mainF();
+      initStatus = 1;
+    }
+    else if(incoming == '2' && initStatus){
+      relay1_Off; 
+      relay2_Off;
+      relay3_Off;
+      relay4_Off;
+      relay5_Off;
+      initStatus = 0;
+    }
   }
 }
+
+void initF() {
+  pinMode(RELAY1, OUTPUT); //Set relay1 as output.
+  pinMode(RELAY2, OUTPUT); //Set relay2 as output.
+  pinMode(RELAY3, OUTPUT); //Set relay3 as output.
+  pinMode(RELAY4, OUTPUT); //Set relay4 as output.
+  pinMode(RELAY5, OUTPUT); //Set relay5 as output.
+  pinMode(LEVEL_PIN, INPUT); //Set level pin as input.
+  myservo1.attach(44); //Attach servo1 to pin 44.
+  myservo2.attach(46); //Attach servo2 to pin 46.
+  initStatus = 0;
+}
+
+//void main_printF() {
+//  unsigned long currentMillis = millis();
+//  if ((unsigned long)(currentMillis - previousMillis) >= interval) {
+//    pH1_Print();
+//    turbidity1_Print();
+//    volume1_Print();
+//    pH2_Print();
+//    turbidity2_Print();
+//    volume2_Print();
+//    temp_Print();
+//    moisture_Print();
+//    soda_Print();
+//    Serial.print("\n"); 
+//    previousMillis = currentMillis;
+//  }
+//}
 
 void mainF() {
     pump_Effluent();
@@ -113,13 +139,14 @@ void stop_Relays() {
   relay5_Off;
 }
 
-void init_Relays() {
-  relay1_On(); //Pump water to influent container.
-  relay2_On(); //Pump cleaning water to pH input sensor.
-  relay3_On(); //Pump cleaning water to pH output sensor.
-  relay4_Off(); //Standby for vermibed pump.
-  relay5_Off(); //Standby for soda ash pump.
-}
+//void init_Relays() {
+//  relay1_On(); //Pump water to influent container.
+//  relay2_On(); //Pump cleaning water to pH input sensor.
+//  relay3_On(); //Pump cleaning water to pH output sensor.
+//  relay4_Off(); //Standby for vermibed pump.
+//  relay5_Off(); //Standby for soda ash pump.
+//  initStatus = 1;
+//}
 
 int distance1_Read() {
   distance1 = sonar1.ping_cm();
@@ -144,12 +171,11 @@ void distance2_Print() {
 }
 
 float pH1_Read() {
-  static float voltage;
-  pHArray[pHArrayIndex++] = analogRead(PH_SENSOR1_PIN);
-  if (pHArrayIndex == ArrayLength)pHArrayIndex = 0;
-  voltage = avergearray(pHArray, ArrayLength) * 5.0 / 1024;
-  pHUnit1 = 3.5 * voltage + Offset1;
-  return pHUnit1;
+    pHArray1[pHArrayIndex1++]=analogRead(PH_SENSOR1_PIN);
+      if(pHArrayIndex1==ArrayLength1)pHArrayIndex1=0;
+      pHvoltage1 = averagearray(pHArray1, ArrayLength1)*5.0/1024;
+      pHUnit1 = 3.5*pHvoltage1+Offset1;
+      return pHUnit1;
 }
 
 void pH1_Print() {
@@ -159,12 +185,11 @@ void pH1_Print() {
 }
 
 float pH2_Read() {
-  static float voltage;
-  pHArray[pHArrayIndex++] = analogRead(PH_SENSOR2_PIN);
-  if (pHArrayIndex == ArrayLength)pHArrayIndex = 0;
-  voltage = avergearray(pHArray, ArrayLength) * 5.0 / 1024;
-  pHUnit2 = 3.5 * voltage + Offset2;
-  return pHUnit2;
+    pHArray2[pHArrayIndex2++]=analogRead(PH_SENSOR2_PIN);
+      if(pHArrayIndex2==ArrayLength2)pHArrayIndex2=0;
+      pHvoltage2 = averagearray(pHArray2, ArrayLength2)*5.0/1024;
+      pHUnit2 = 3.5*pHvoltage2+Offset2;
+      return pHUnit2;
 }
 
 void pH2_Print() {
@@ -173,10 +198,11 @@ void pH2_Print() {
   Serial.print(" ");
 }
 
-void turbidity1_Read() {
-  int sensorValue = analogRead(TURBIDITY1_PIN);
+float turbidity1_Read() {
+  float sensorValue = analogRead(TURBIDITY1_PIN);
   float voltage = sensorValue * (5.0 / 1024.0);
-  turbidityUnit1 = sensorValue;
+  turbidityUnit1 = (-1120.4*voltage*voltage) + 5742.3*voltage -4352.9;
+  return turbidityUnit1;
 }
 
 void turbidity1_Print() {
@@ -185,10 +211,11 @@ void turbidity1_Print() {
   Serial.print(" ");
 }
 
-void turbidity2_Read() {
-  int sensorValue = analogRead(TURBIDITY2_PIN);
+float turbidity2_Read() {
+  float sensorValue = analogRead(TURBIDITY2_PIN);
   float voltage = sensorValue * (5.0 / 1024.0);
-  turbidityUnit2 = sensorValue;
+  turbidityUnit2 = (-1120.4*voltage*voltage) + 5742.3*voltage -4352.9;
+  return turbidityUnit2;
 }
 
 void turbidity2_Print() {
@@ -368,7 +395,19 @@ void pump_Influent() {
 void pump_Vermibed() {
   distance1_Read();
   //Do logic that pumps water to vermibed while influent container is not empty without disrupting other functions.
-  relay4_On(); //Turn on vermibed pump.
+  unsigned long currentMillis = millis();
+  if(distance1 == containerHeight){
+    if(currentMillis - previousMillis >= interval && !relay4_Status){
+      relay4_On(); //Turn on vermibed pump.
+      previousMillis = currentMillis;
+      relay4_Status = 1;    
+    }
+    else if(currentMillis - previousMillis >= interval && relay4_Status){
+      relay4_Off();
+      previousMillis = currentMillis;
+      relay4_Status = 0;
+    }
+  }
   //Add timer interval that reads soil moisture.
   if (distance1 == containerHeight) {
     relay4_Off();
@@ -397,7 +436,7 @@ void dilute() {
 }
 
 //For pH Sensor
-double avergearray(int* arr, int number) {
+float averagearray(int* arr, int number) {
   int i;
   int max, min;
   double avg;
