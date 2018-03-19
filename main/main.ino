@@ -22,7 +22,7 @@
 #define waterLimit      10 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
 #define containerHeight 30 // Height of the container in cm.
 #define Offset1          0.10  //Deviation compensate for pH Sensor1.
-#define Offset2          0.11  //Deviation compensate for pH Sensor2.
+#define Offset2          0.26  //Deviation compensate for pH Sensor2.
 #define ArrayLength1     40 // Times of collection for pH values.
 #define ArrayLength2     40 // Times of collection for pH values.
 
