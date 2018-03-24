@@ -48,6 +48,8 @@ class Application(Frame):
             self.soil_moisture_data = StringVar()
             self.temperature_label_name = StringVar()
             self.temperature_data = StringVar()
+            self.soda_label_name = StringVar()
+            self.soda_data = StringVar()
             self.Nph_input_label_name = StringVar()
             self.Nph_input_data = StringVar()
             self.Nturb_input_label_name = StringVar()
@@ -66,7 +68,6 @@ class Application(Frame):
             self.turb_saved_data = StringVar()
             self.Nturb_saved_data = StringVar()
             self.timeInterval = IntVar()
-            self.soda_ash_data = StringVar()
             
             self.frame()
             self.createWidgets()
@@ -100,7 +101,7 @@ class Application(Frame):
         self.f4 = Frame(self, width = 190, height = 235, relief=SUNKEN, bd=10)
         self.f4.grid(row=2, column=2)
 
-        self.f4a = Frame(self, width = 160, height = 235, relief="raise", bd=5, pady=10, padx=1, bg="white")
+        self.f4a = Frame(self, width = 160, height = 205, relief="raise", bd=5, pady=3, padx=1, bg="white")
         self.f4a.grid(row=2, column=2, ipadx=1)
 
         self.f5 = Frame(self, width = 610, height = 75, relief=SUNKEN, bd=10)
@@ -123,19 +124,6 @@ class Application(Frame):
          self.Nph_saved_data.set(self.ph_output.get())
          self.Nturb_saved_data.set(self.turb_output.get())
 
-##    def soda_measure(self):
-##
-##        data = ser.readline()
-##
-##        if(data != " "):
-##            try:
-##                relay_data = data.split(" ")
-##                
-##                self.soda_ash_data.set(str(relay_data[4]))
-##                self.soda_ash_data.grid(row=9, column=2)
-##            except IndexError:
-##                pass
-##        self.after(1000, self.soda_measure)
                 
     #get the values from the arduino and split and store to the text variable
     def measure(self):
@@ -215,6 +203,16 @@ class Application(Frame):
                 
                 self.temperature_data.set(str(processed_data[7]))
                 self.temperature.grid(row=6, column=5)
+
+                #soda ash
+                self.soda_label_name.set("Soda Ash: ")
+                self.soda_label.grid(row=9, column=0)
+                
+                self.soda_data.set(str(processed_data[8]))
+                self.soda.grid(row=9, column=1)
+
+                if str(processed_data[8])==0:
+                    self.soda_data(text="Low")
 
                 #===========================2nd Frame Container========================================
                 #Untreated
@@ -363,15 +361,14 @@ class Application(Frame):
         self.show = Label(self.f4a, text='00:00:00:00', font=('Helvetica', 15), bg="white")
         self.show.grid(row=0, column=0, columnspan=2)
 
+        #soda ash
+        self.soda_label = Label(self.f4a, textvariable=self.soda_label_name, font=HELV12, bg="white")
+        self.soda_label_name.set("ph Input")
         
+        self.soda = Label(self.f4a, textvariable=self.soda_data, font=HELV12, bg="white")
+        self.soda_data.set("Soda Ash")
 
-        #Soda Ash Level
-        self.soda_ash = Label(self.f4a, text="Ash Level:", font=HELV12, bg="white")
-        self.soda_ash.grid(row=9, column=0)
-
-        self.soda_ash_data = Label(self.f4a, textvariable=self.soda_ash_data, font=HELV12, bg="white")
-        self.soda_ash_data.grid(row=9,column=1)
-
+        
         #===============================Buttons 3rd Container=======================
         #Button Save in
         self.btn_save_in = Button(self.f5a, text="Save In", command=self.input_saved, bg="light goldenrod", bd=8, font=HELV12, padx=5, pady=5).grid(row=0,column=0)
