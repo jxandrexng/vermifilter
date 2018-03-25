@@ -16,12 +16,12 @@ HELV29 = ("Helvetica", 29, "bold")
 HELV18 = ("Helvetica", 18, "bold")
 HELV12 = ("Helvetica", 12, "bold")
 HELV10 = ("Helvetica", 10, "bold")
+HELV9 = ("Helvetica", 9, "bold")
 HELV7 = ("Helvetica", 7, "bold")
 
 
 class Application(Frame):
 
-    
     def __init__(self, master=None):
             Frame.__init__(self, master, bg="azure")
             #frame format
@@ -48,8 +48,6 @@ class Application(Frame):
             self.soil_moisture_data = StringVar()
             self.temperature_label_name = StringVar()
             self.temperature_data = StringVar()
-            self.soda_label_name = StringVar()
-            self.soda_data = StringVar()
             self.Nph_input_label_name = StringVar()
             self.Nph_input_data = StringVar()
             self.Nturb_input_label_name = StringVar()
@@ -68,6 +66,7 @@ class Application(Frame):
             self.turb_saved_data = StringVar()
             self.Nturb_saved_data = StringVar()
             self.timeInterval = IntVar()
+            self.ph_value = StringVar()
             
             self.frame()
             self.createWidgets()
@@ -78,8 +77,6 @@ class Application(Frame):
             self.timeString = str(self.timer[0]) + ':' + str(self.timer[1]) + ':' + str(self.timer[2]) + ':' + str(self.timer[3])
             self.update_time()
             self.time()
-##            self.soda_measure()
-           
     
     def frame(self):
         #setting frame
@@ -132,13 +129,7 @@ class Application(Frame):
 
         if (data != " "):
             try:
-                processed_data = data.split(" ")
-
-##                ph_reading = str(processed_data[1]) 
-##
-##                if self.soda_ash_data.set(str(processed_data[0])) < 3:
-##                    self.soda_ash_data.set("High")
-                
+                processed_data = data.split(" ") 
                 
                 #header
                 self.header_frame_label_name.set("Automated Vermifiltration System")
@@ -204,56 +195,46 @@ class Application(Frame):
                 self.temperature_data.set(str(processed_data[7]))
                 self.temperature.grid(row=6, column=5)
 
-                #soda ash
-                self.soda_label_name.set("Soda Ash: ")
-                self.soda_label.grid(row=9, column=0)
-                
-                self.soda_data.set(str(processed_data[8]))
-                self.soda.grid(row=9, column=1)
-
-                if str(processed_data[8])==0:
-                    self.soda_data(text="Low")
-
-                #===========================2nd Frame Container========================================
+                #===========================Data grid Container========================================
                 #Untreated
                 self.Untreated_label_name.set("Untreated Water")
-                self.Untreated_label.grid(row=1, column=0, columnspan=2)
+                self.Untreated_label.grid(row=2, column=0, columnspan=2)
                 
                 #Nph input
                 self.Nph_input_label_name.set("Ph Input: ")
-                self.Nph_input_label.grid(row=2, column=0)
+                self.Nph_input_label.grid(row=3, column=0)
 
                 self.Nph_input_data.set("Ph Input: ")
-                self.Nph_input.grid(row=2, column=1)
+                self.Nph_input.grid(row=3, column=1)
 
                 #Nturbidity input
                 self.Nturb_input_label_name.set("Turbidity Input: ")
-                self.Nturb_input_label.grid(row=3, column=0)
+                self.Nturb_input_label.grid(row=4, column=0)
                 
                 self.Nturb_input_data.set("Turbidity Input: ")
-                self.Nturb_input.grid(row=3, column=1)
+                self.Nturb_input.grid(row=4, column=1)
 
                 #breakline
                 self.Breakline_label_name.set("-------------")
-                self.Breakline_label.grid(row=4, column=0, columnspan=2)
+                self.Breakline_label.grid(row=5, column=0, columnspan=2)
                 
                 #Treated label
                 self.Treated_label_name.set("Treated Water")
-                self.Treated_label.grid(row=5, column=0, columnspan=2)
+                self.Treated_label.grid(row=6, column=0, columnspan=2)
                 
                 #Nph output
                 self.Nph_output_label_name.set("Ph Output: ")
-                self.Nph_output_label.grid(row=6, column=0)
+                self.Nph_output_label.grid(row=7, column=0)
                 
                 self.Nph_output_data.set("Ph Output: ")
-                self.Nph_output.grid(row=6, column=1)
+                self.Nph_output.grid(row=7, column=1)
 
                 #Nturbidity output
                 self.Nturb_output_label_name.set("Turbidity Output: ")
-                self.Nturb_output_label.grid(row=7, column=0)
+                self.Nturb_output_label.grid(row=8, column=0)
                 
                 self.Nturb_output_data.set("Turbidity Output: ")
-                self.Nturb_output.grid(row=7, column=1)
+                self.Nturb_output.grid(row=8, column=1)
 
             except IndexError:
                 pass
@@ -332,42 +313,41 @@ class Application(Frame):
         self.Untreated_label = Label(self.f4a, text="Untreated Water", fg="red", font=HELV12, bg="white")
         
         #ph Input
-        self.Nph_input_label = Label(self.f4a, text="PH Input: ", font=HELV10, padx=10, bg="white")
+        self.Nph_input_label = Label(self.f4a, text="PH Input: ", font=HELV9, padx=10, bg="white")
 
-        self.Nph_input = Label(self.f4a, textvariable=self.ph_saved_data, font=HELV10, bg="white")
-
+        self.Nph_input = Label(self.f4a, textvariable=self.ph_saved_data, font=HELV9, bg="white")
         #turbidity input
-        self.Nturb_input_label = Label(self.f4a, text="Turbidity Input: ", font=HELV10, padx=10, bg="white")
+        self.Nturb_input_label = Label(self.f4a, text="Turbidity Input: ", font=HELV9, padx=10, bg="white")
         
-        self.Nturb_input = Label(self.f4a, textvariable=self.turb_saved_data, font=HELV10, bg="white")
+        self.Nturb_input = Label(self.f4a, textvariable=self.turb_saved_data, font=HELV9, bg="white")
 
-        #Brekline
+        #Breakline
         self.Breakline_label = Label(self.f4a, text="-----------------------------", font=HELV12, bg="white")
         
         #Treated label
         self.Treated_label = Label(self.f4a, text="Treated Water", fg="green", font=HELV12, bg="white")
         
         #Nph output
-        self.Nph_output_label = Label(self.f4a, text="PH Output:", font=HELV10, padx=10, bg="white")
+        self.Nph_output_label = Label(self.f4a, text="PH Output:", font=HELV9, padx=10, bg="white")
    
-        self.Nph_output = Label(self.f4a, textvariable=self.Nph_saved_data, font=HELV10, bg="white")
+        self.Nph_output = Label(self.f4a, textvariable=self.Nph_saved_data, font=HELV9, bg="white")
 
         #turbidity Output
-        self.Nturb_output_label = Label(self.f4a, text="Turbidity Output: ", font=HELV10, padx=10, bg="white")
+        self.Nturb_output_label = Label(self.f4a, text="Turbidity Output: ", font=HELV9, padx=10, bg="white")
         
-        self.Nturb_output = Label(self.f4a, textvariable=self.Nturb_saved_data, font=HELV10, bg="white")
-
+        self.Nturb_output = Label(self.f4a, textvariable=self.Nturb_saved_data, font=HELV9, bg="white")
+        
+        #line-height-top
+        self.bottom = Label(self.f4a, text=' ' , bg="white")
+        self.bottom.grid(row=0, column=0, columnspan=2)
+        
         #timer
         self.show = Label(self.f4a, text='00:00:00:00', font=('Helvetica', 15), bg="white")
-        self.show.grid(row=0, column=0, columnspan=2)
+        self.show.grid(row=1, column=0, columnspan=2)
 
-        #soda ash
-        self.soda_label = Label(self.f4a, textvariable=self.soda_label_name, font=HELV12, bg="white")
-        self.soda_label_name.set("ph Input")
-        
-        self.soda = Label(self.f4a, textvariable=self.soda_data, font=HELV12, bg="white")
-        self.soda_data.set("Soda Ash")
-
+        #line-height-bottom
+        self.bottom = Label(self.f4a, text=' ' , bg="white")
+        self.bottom.grid(row=9, column=0, columnspan=2)
         
         #===============================Buttons 3rd Container=======================
         #Button Save in
@@ -451,17 +431,6 @@ class Application(Frame):
         if self.qexit > 0:
             root.destroy()
             return
-
-    def decrease_delay(self):
-        self.timeInterval = (self.timeInterval-1)
-        ser.write("5")
-        print 'Delay Decreased'
-        
-    def increase_delay(self):
-        self.timeInterval = self.timeInterval+1
-        ser.write("6")
-        print 'Delay Increased'
-
 
 
 root = Tk()
