@@ -289,37 +289,40 @@ void pump_Influent() {
   else if (distance1 <= waterLimit && distance1 != 0) { //If influent water is almost full, execute the following:
     relay1_Off(); //Turn off influent pump.
     isFull = true; //Set boolean to 1.
-  }
-  else if(pHUnit1 < 6.00 && isFull) {
-    pH1_Read();
-    if (pHUnit1 < 6.00) { // If pH reading is less than 6pH, pump soda ash to dilute input
+    while (isFull) {
       unsigned long currentMillis = millis();
-      if(currentMillis - previousMillis >= soda_interval){
-        relay3_On();
-        previousMillis = currentMillis;
+      if(isFull){
+        if (currentMillis - previousMillis >= interval && !relay2_Status) {
+          relay2_On(); //Turn on vermibed pump.
+          previousMillis = currentMillis;
+          relay2_Status = true;
+        }
+        else if (currentMillis - previousMillis >= interval && relay2_Status) {
+          relay2_Off();
+          previousMillis = currentMillis;
+          relay2_Status = false;
+        }
       }
-      if(currentMillis - previousMillis >= interval){
-        relay4_On();
-        previousMillis = currentMillis;
-      }
-    } else {
-      relay3_Off();
-      relay4_Off();
     }
   }
-  else if (isFull) {
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval && !relay2_Status) {
-      relay2_On(); //Turn on vermibed pump.
-      previousMillis = currentMillis;
-      relay2_Status = true;
-    }
-    else if (currentMillis - previousMillis >= interval && relay2_Status) {
-      relay2_Off();
-      previousMillis = currentMillis;
-      relay2_Status = false;
-    }
-  }
+//  else if(pHUnit1 < 6.00 && isFull) {
+//    pH1_Read();
+//    if (pHUnit1 < 6.00) { // If pH reading is less than 6pH, pump soda ash to dilute input
+//      unsigned long currentMillis = millis();
+//      if(currentMillis - previousMillis >= soda_interval){
+//        relay3_On();
+//        previousMillis = currentMillis;
+//      }
+//      if(currentMillis - previousMillis >= interval){
+//        relay4_On();
+//        previousMillis = currentMillis;
+//      }
+//    } else {
+//      relay3_Off();
+//      relay4_Off();
+//    }
+//  }
+  
   else if (distance1 == containerHeight) {
     isFull = false;
   }
