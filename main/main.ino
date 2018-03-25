@@ -283,12 +283,27 @@ void relay4_Off() {
 }
 
 void pump_Influent() {
+  distance1_Read();
+  distance2_Read();
   if (!isFull && distance1 >= waterLimit) { //If influent water level is empty, execute the following functions:
     relay1_On(); //Turn on influent pump.
   }
-  else if (distance1 <= waterLimit && distance1 != 0) { //If influent water is almost full, execute the following:
+  else if ((distance1 <= waterLimit) && (distance1 != 0)) { //If influent water is almost full, execute the following:
     relay1_Off(); //Turn off influent pump.
     isFull = true; //Set boolean to 1.
+    if (isFull) {
+    unsigned long currentMillis = millis();
+      if (currentMillis - previousMillis >= interval && !relay2_Status) {
+        relay2_On(); //Turn on vermibed pump.
+        previousMillis = currentMillis;
+        relay2_Status = true;
+      }
+      else if (currentMillis - previousMillis >= interval && relay2_Status) {
+        relay2_Off();
+        previousMillis = currentMillis;
+        relay2_Status = false;
+      }
+    }
   }
   else if(pHUnit1 < 6.00 && isFull) {
     pH1_Read();
@@ -305,19 +320,6 @@ void pump_Influent() {
     } else {
       relay3_Off();
       relay4_Off();
-    }
-  }
-  else if (isFull) {
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval && !relay2_Status) {
-      relay2_On(); //Turn on vermibed pump.
-      previousMillis = currentMillis;
-      relay2_Status = true;
-    }
-    else if (currentMillis - previousMillis >= interval && relay2_Status) {
-      relay2_Off();
-      previousMillis = currentMillis;
-      relay2_Status = false;
     }
   }
   else if (distance1 == containerHeight) {
