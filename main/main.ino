@@ -17,8 +17,8 @@
 #define MOISTURE_PIN    A4 // Arduino pin tied to soil moisture sensor.
 #define TEMPERATURE_PIN A5 // Arduino pin tied to temperature sensor.
 #define MAX_DISTANCE    250 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-#define waterLimit       3 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
-#define containerHeight 25 // Height of the container in cm.
+#define waterLimit       3.0 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
+#define containerHeight 25.0 // Height of the container in cm.
 #define Offset1          0.10  //Deviation compensate for pH Sensor1.
 #define Offset2          0.26  //Deviation compensate for pH Sensor2.
 #define OffsetTurb1     -0.121042728; //Deviation compensate for Turbidity Sensor1.
@@ -29,7 +29,7 @@
 
 // DECLARATION
 boolean initStatus = 0; //Store initialization status
-boolean relay2_Status = 0; //Store relay2 status
+boolean relay2_isOn = 0; //Store relay2 status
 boolean isFull = 0; //Store container status
 char incoming; //Incoming value for serial
 float turbidityUnit1, turbidityUnit2, pHUnit1, pHUnit2, temperature, pHvoltage1, pHvoltage2;
@@ -37,8 +37,8 @@ int pHArray1[ArrayLength1];   //Store the average value of the sensor feedback
 int pHArrayIndex1 = 0;
 int pHArray2[ArrayLength2];   //Store the average value of the sensor feedback
 int pHArrayIndex2 = 0;
-int distance1, distance2, moistureValue;
-unsigned long interval = 1000, previousMillis = 0, soda_interval = 500;
+int   distance1, distance2, moistureValue;
+unsigned long interval = 1000, previousMillis = 0;
 OneWire ds(TEMPERATURE_PIN);
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing1
 NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing2
@@ -59,16 +59,26 @@ void loop() {
     incoming = Serial.read(); //Read transmitted input from Raspberry Pi
     if (incoming == '1') {
       initStatus = true;
-      relay1_On(); //Pump water to influent container.
-      relay2_Off(); //Standby for vermibed pump.
-      relay3_Off(); //Standby for soda ash pump.
-      relay4_Off(); //Standby for mixing pump.
+      digitalWrite(RELAY1, HIGH); //Pump water to influent container.
       while (initStatus) {
         main_printF();
-        pump_Influent();
+        if(distance1 > 5 && distance1 <= 25 && !isFull){
+        digitalWrite(RELAY1, HIGH);
+        }
+        else if(distance1 <= 4 && !isFull && distance1 != 0){
+          isFull = true;
+          digitalWrite(RELAY1, LOW);
+          unsigned long currentMillis = millis();
+          if((unsigned long)(currentMillis - previousMillis) >= 1000){
+            relay2_isOn = !relay2_isOn;
+            digitalWrite(RELAY2, relay2_isOn);
+            previousMillis = currentMillis;
+          }
+        }
         incoming = Serial.read();
         if (incoming == '2') {
           initStatus = false;
+          isFull = false;
           digitalWrite(RELAY1, LOW);
           digitalWrite(RELAY2, LOW);
           digitalWrite(RELAY3, LOW);
@@ -81,9 +91,8 @@ void loop() {
 
 void main_printF() {
   unsigned long currentMillis = millis();
-  if ((unsigned long)(currentMillis - previousMillis) >= interval) {
-    distance1_Read();
-    distance2_Read();
+  unsigned long previousMillis = 0;
+  if (currentMillis - previousMillis >= interval) {
     pH1_Print();
     turbidity1_Print();
     volume1_Print();
@@ -186,13 +195,15 @@ void moisture_Print() {
 }
 
 void volume1_Print() {
-  int waterLevel1 = ((containerHeight-distance1)/containerHeight)*100;
+  distance1_Read();
+  double waterLevel1 = ((containerHeight-distance1)/containerHeight)*100.0;
   Serial.print(waterLevel1);
   Serial.print("% ");
 }
 
 void volume2_Print() {
-  int waterLevel2 = ((containerHeight-distance2)/containerHeight)*100;
+  distance2_Read();
+  double waterLevel2 = ((containerHeight-distance2)/containerHeight)*100.0;
   Serial.print(waterLevel2);
   Serial.print("% ");
 }
@@ -248,84 +259,6 @@ void temp_Print() {
   temp_Read();
   Serial.print(temperature);
   Serial.print("°C ");
-}
-
-void relay1_On() {
-  digitalWrite(RELAY1, HIGH);
-}
-
-void relay1_Off() {
-  digitalWrite(RELAY1, LOW);
-}
-
-void relay2_On() {
-  digitalWrite(RELAY2, HIGH);
-}
-
-void relay2_Off() {
-  digitalWrite(RELAY2, LOW);
-}
-
-void relay3_On() {
-  digitalWrite(RELAY3, HIGH);
-}
-
-void relay3_Off() {
-  digitalWrite(RELAY3, LOW);
-}
-
-void relay4_On() {
-  digitalWrite(RELAY4, HIGH);
-}
-
-void relay4_Off() {
-  digitalWrite(RELAY4, LOW);
-}
-
-void pump_Influent() {
-  if (!isFull && distance1 >= waterLimit) { //If influent water level is empty, execute the following functions:
-    relay1_On(); //Turn on influent pump.
-  }
-  else if (distance1 <= waterLimit && distance1 != 0) { //If influent water is almost full, execute the following:
-    relay1_Off(); //Turn off influent pump.
-    isFull = true; //Set boolean to 1.
-    while (isFull) {
-      unsigned long currentMillis = millis();
-      if(isFull){
-        if (currentMillis - previousMillis >= interval && !relay2_Status) {
-          relay2_On(); //Turn on vermibed pump.
-          previousMillis = currentMillis;
-          relay2_Status = true;
-        }
-        else if (currentMillis - previousMillis >= interval && relay2_Status) {
-          relay2_Off();
-          previousMillis = currentMillis;
-          relay2_Status = false;
-        }
-      }
-    }
-  }
-//  else if(pHUnit1 < 6.00 && isFull) {
-//    pH1_Read();
-//    if (pHUnit1 < 6.00) { // If pH reading is less than 6pH, pump soda ash to dilute input
-//      unsigned long currentMillis = millis();
-//      if(currentMillis - previousMillis >= soda_interval){
-//        relay3_On();
-//        previousMillis = currentMillis;
-//      }
-//      if(currentMillis - previousMillis >= interval){
-//        relay4_On();
-//        previousMillis = currentMillis;
-//      }
-//    } else {
-//      relay3_Off();
-//      relay4_Off();
-//    }
-//  }
-  
-  else if (distance1 == containerHeight) {
-    isFull = false;
-  }
 }
 
 //For pH Sensor
