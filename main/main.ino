@@ -37,8 +37,8 @@ int pHArray1[ArrayLength1];   //Store the average value of the sensor feedback
 int pHArrayIndex1 = 0;
 int pHArray2[ArrayLength2];   //Store the average value of the sensor feedback
 int pHArrayIndex2 = 0;
-int   distance1, distance2, moistureValue;
-unsigned long interval = 1000, previousMillis = 0;
+int distance1, distance2, moistureValue;
+unsigned long interval = 1000, previousMillis1 = 0, previousMillis2 = 0;
 OneWire ds(TEMPERATURE_PIN);
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing1
 NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing2
@@ -63,17 +63,22 @@ void loop() {
       while (initStatus) {
         main_printF();
         if(distance1 > 5 && distance1 <= 25 && !isFull){
-        digitalWrite(RELAY1, HIGH);
+          digitalWrite(RELAY1, HIGH); //Pump water to influent container until it is full.
         }
-        else if(distance1 <= 4 && !isFull && distance1 != 0){
-          isFull = true;
-          digitalWrite(RELAY1, LOW);
-          unsigned long currentMillis = millis();
-          if((unsigned long)(currentMillis - previousMillis) >= 1000){
-            relay2_isOn = !relay2_isOn;
-            digitalWrite(RELAY2, relay2_isOn);
-            previousMillis = currentMillis;
-          }
+        else if(distance1 >= waterLimit && distance1 != 0){ //Check if influent container is full.
+          isFull = true; //Set influent to full.
+          digitalWrite(RELAY1, LOW); //Turn off influent pump
+          unsigned long currentMillis2 = millis();
+            if(currentMillis2 - previousMillis2 >= interval){ //Every 1000ms
+              previousMillis2 = millis(); //0 is replaced with 1000 and so on
+              relay2_isOn = !relay2_isOn;
+              digitalWrite(RELAY2, relay2_isOn); //Relay2 copies logic of relay2 boolean.
+              distance1_Read(); //Check distance
+              if(distance1 != 0 && distance1 == containerHeight){
+                isFull = false;
+                digitalWrite(RELAY2, LOW);
+              }
+            }
         }
         incoming = Serial.read();
         if (incoming == '2') {
@@ -90,9 +95,9 @@ void loop() {
 }
 
 void main_printF() {
-  unsigned long currentMillis = millis();
-  unsigned long previousMillis = 0;
-  if (currentMillis - previousMillis >= interval) {
+  unsigned long currentMillis1 = millis();
+  if (currentMillis1 - previousMillis1 >= interval) {
+    previousMillis1 = millis();
     pH1_Print();
     turbidity1_Print();
     volume1_Print();
@@ -102,7 +107,6 @@ void main_printF() {
     moisture_Print();
     temp_Print();
     Serial.print("\n");
-    previousMillis = currentMillis;
   }
 }
 
