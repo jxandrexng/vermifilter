@@ -38,7 +38,7 @@ int pHArrayIndex1 = 0;
 int pHArray2[ArrayLength2];   //Store the average value of the sensor feedback
 int pHArrayIndex2 = 0;
 int distance1, distance2, moistureValue;
-unsigned long interval = 1000, previousMillis1 = 0, previousMillis2 = 0;
+unsigned long interval = 2000, previousMillis1 = 0, previousMillis2 = 0;
 OneWire ds(TEMPERATURE_PIN);
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing1
 NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing2
