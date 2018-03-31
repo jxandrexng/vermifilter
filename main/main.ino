@@ -10,6 +10,7 @@
 #define RELAY2           4  // Arduino pin tied to relay2 pin of the vermibed pump.
 #define RELAY3           5  // Arduino pin tied to relay3 pin of the soda ash pump.
 #define RELAY4           6  // Arduino pin tied to relay4 pin of the mixing pump.
+#define RELAY5           7  // Arduino pin tied to relay5 pin of solenoid valve.
 #define TURBIDITY1_PIN  A0 // Arduino pin tied to turbidity1 sensor.
 #define TURBIDITY2_PIN  A1 // Arduino pin tied to turbidity2 sensor.
 #define PH_SENSOR1_PIN  A2 // Arduino pin tied to ph1 sensor.
@@ -18,7 +19,6 @@
 #define TEMPERATURE_PIN A5 // Arduino pin tied to temperature sensor.
 #define MAX_DISTANCE    250 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 #define waterLimit       3.0 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
-#define containerHeight 25.0 // Height of the container in cm.
 #define Offset1          0.10  //Deviation compensate for pH Sensor1.
 #define Offset2          0.26  //Deviation compensate for pH Sensor2.
 #define OffsetTurb1     -0.121042728; //Deviation compensate for Turbidity Sensor1.
@@ -50,6 +50,7 @@ void setup() {
   pinMode(RELAY2, OUTPUT); //Set relay2 as output.
   pinMode(RELAY3, OUTPUT); //Set relay3 as output.
   pinMode(RELAY4, OUTPUT); //Set relay4 as output.
+  pinMode(RELAY5, OUTPUT); //Set relay5 as output.
 }
 
 // LOOP
@@ -62,21 +63,27 @@ void loop() {
       digitalWrite(RELAY1, HIGH); //Pump water to influent container.
       while (initStatus) {
         main_printF();
-        if(distance1 > 5 && distance1 <= 25 && !isFull){
+        if(distance1 >= 5 && !isFull){
           digitalWrite(RELAY1, HIGH); //Pump water to influent container until it is full.
+          digitalWrite(RELAY4, HIGH);
+          digitalWrite(RELAY2, LOW);
         }
-        else if(distance1 >= waterLimit && distance1 != 0){ //Check if influent container is full.
-          isFull = true; //Set influent to full.
+        else if(distance1 != 0){ //Check if influent container is full.
+          isFull = true;
           digitalWrite(RELAY1, LOW); //Turn off influent pump
+          digitalWrite(RELAY4, LOW);
+          digitalWrite(RELAY2, HIGH);
           unsigned long currentMillis2 = millis();
             if(currentMillis2 - previousMillis2 >= interval){ //Every 1000ms
               previousMillis2 = millis(); //0 is replaced with 1000 and so on
               relay2_isOn = !relay2_isOn;
-              digitalWrite(RELAY2, relay2_isOn); //Relay2 copies logic of relay2 boolean.
+              digitalWrite(RELAY5, relay2_isOn); //Relay2 copies logic of relay2 boolean.
               distance1_Read(); //Check distance
-              if(distance1 != 0 && distance1 == containerHeight){
+              if(distance1 != 0 && distance1 == 24){
                 isFull = false;
+                initStatus = false;
                 digitalWrite(RELAY2, LOW);
+                digitalWrite(RELAY5, LOW);
               }
             }
         }
@@ -88,6 +95,7 @@ void loop() {
           digitalWrite(RELAY2, LOW);
           digitalWrite(RELAY3, LOW);
           digitalWrite(RELAY4, LOW);
+          digitalWrite(RELAY5, LOW);
         }
       }
     }
@@ -116,6 +124,7 @@ int distance1_Read() {
 }
 
 void distance1_Print() {
+  distance1_Read();
   Serial.print("Distance1: ");
   Serial.print(distance1); // Send ping, get distance in cm and print result (0 = outside set distance range)
   Serial.print(" ");
@@ -127,6 +136,7 @@ int distance2_Read() {
 }
 
 void distance2_Print() {
+  distance2_Read();
   Serial.print("Distance2: ");
   Serial.print(distance2); // Send ping, get distance in cm and print result (0 = outside set distance range)
   Serial.print(" ");
@@ -200,14 +210,14 @@ void moisture_Print() {
 
 void volume1_Print() {
   distance1_Read();
-  double waterLevel1 = ((containerHeight-distance1)/containerHeight)*100.0;
+  double waterLevel1 = ((26.0-distance1)/26.0)*100.0;
   Serial.print(waterLevel1);
   Serial.print("% ");
 }
 
 void volume2_Print() {
   distance2_Read();
-  double waterLevel2 = ((containerHeight-distance2)/containerHeight)*100.0;
+  double waterLevel2 = ((25.0-distance2)/25.0)*100.0;
   Serial.print(waterLevel2);
   Serial.print("% ");
 }
