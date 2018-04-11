@@ -7,9 +7,9 @@
 #define TRIGGER2_PIN    10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
 #define ECHO2_PIN        9  // Arduino pin tied to echo pin on the second ultrasonic sensor.
 #define RELAY1           3  // Arduino pin tied to relay1 pin of the influent pump.
-#define RELAY2           4  // Arduino pin tied to relay2 pin of the vermibed pump.
+#define RELAY2           4  // Arduino pin tied to relay2 pin of the mixing pump1.
 #define RELAY3           5  // Arduino pin tied to relay3 pin of the soda ash pump.
-#define RELAY4           6  // Arduino pin tied to relay4 pin of the mixing pump.
+#define RELAY4           6  // Arduino pin tied to relay4 pin of the mixing pump2.
 #define RELAY5           7  // Arduino pin tied to relay5 pin of solenoid valve.
 #define TURBIDITY1_PIN  A0 // Arduino pin tied to turbidity1 sensor.
 #define TURBIDITY2_PIN  A1 // Arduino pin tied to turbidity2 sensor.
@@ -17,35 +17,36 @@
 #define PH_SENSOR2_PIN  A3 // Arduino pin tied to ph2 sensor.
 #define MOISTURE_PIN    A4 // Arduino pin tied to soil moisture sensor.
 #define TEMPERATURE_PIN A5 // Arduino pin tied to temperature sensor.
-#define MAX_DISTANCE    250 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-#define waterLimit       3.0 // Limit in cm to which the ultrasonic sensor is in proximity to the water.
+#define MAX_DISTANCE    30 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 #define Offset1          0.10  //Deviation compensate for pH Sensor1.
 #define Offset2          0.26  //Deviation compensate for pH Sensor2.
-#define OffsetTurb1     -0.121042728; //Deviation compensate for Turbidity Sensor1.
-#define OffsetTurb2      0.206105709; //Deviation compensate for Turbidity Sensor2.
+#define OffsetTurb1      0.40 //Deviation compensate for Turbidity Sensor1.
+#define OffsetTurb2      0.04 //Deviation compensate for Turbidity Sensor2.
 #define ArrayLength1     40 // Times of collection for pH values.
 #define ArrayLength2     40 // Times of collection for pH values.
 
 
 // DECLARATION
 boolean initStatus = 0; //Store initialization status
-boolean relay2_isOn = 0; //Store relay2 status
+boolean relay5_State = 0; //Store relay5 status
+boolean relay3_State = 0;
 boolean isFull = 0; //Store container status
 char incoming; //Incoming value for serial
-float turbidityUnit1, turbidityUnit2, pHUnit1, pHUnit2, temperature, pHvoltage1, pHvoltage2;
+float turbidityUnit1, turbidityUnit2, pHUnit1, pHUnit2, temperature, pHvoltage1, pHvoltage2, voltage1, voltage2, sensorValue1, sensorValue2;
+float max_distance1 = 26.0, max_distance2 = 25.0;
 int pHArray1[ArrayLength1];   //Store the average value of the sensor feedback
 int pHArrayIndex1 = 0;
 int pHArray2[ArrayLength2];   //Store the average value of the sensor feedback
 int pHArrayIndex2 = 0;
 int distance1, distance2, moistureValue;
-unsigned long interval = 2000, previousMillis1 = 0, previousMillis2 = 0;
+unsigned long interval_On = 250, interval_Off = 12000, previousMillis1 = 0, previousMillis2 = 0, previousMillis3 = 0, previousMillis4 = 0, previousMillis5 = 0;
 OneWire ds(TEMPERATURE_PIN);
 NewPing sonar1(TRIGGER1_PIN, ECHO1_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing1
 NewPing sonar2(TRIGGER2_PIN, ECHO2_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance. Ultrasonic Sensor NewPing2
 
 // SETUP
 void setup() {
-  Serial.begin(9600); //Begin serial transmission at 9600 Baud rate
+  Serial.begin(2000000); //Begin serial transmission at 2000000 Baud rate
   pinMode(RELAY1, OUTPUT); //Set relay1 as output.
   pinMode(RELAY2, OUTPUT); //Set relay2 as output.
   pinMode(RELAY3, OUTPUT); //Set relay3 as output.
@@ -63,29 +64,67 @@ void loop() {
       digitalWrite(RELAY1, HIGH); //Pump water to influent container.
       while (initStatus) {
         main_printF();
-        if(distance1 >= 5 && !isFull){
+        if (distance1 > 11 && distance1 <= 30 && !isFull) {
           digitalWrite(RELAY1, HIGH); //Pump water to influent container until it is full.
-          digitalWrite(RELAY4, HIGH);
-          digitalWrite(RELAY2, LOW);
-        }
-        else if(distance1 != 0){ //Check if influent container is full.
-          isFull = true;
-          digitalWrite(RELAY1, LOW); //Turn off influent pump
-          digitalWrite(RELAY4, LOW);
+          digitalWrite(RELAY4, HIGH); //Turn on mixing pump
           digitalWrite(RELAY2, HIGH);
+          //          if (pHUnit1 <= 6.00) {
+          //            unsigned long currentMillis5 = millis();
+          //            if (!relay3_State && currentMillis5 - previousMillis5 >= 5000) {
+          //              previousMillis5 = millis();
+          //              relay3_State = true;
+          //              digitalWrite(RELAY3, relay3_State);
+          //            }
+          //            else if (relay3_State && currentMillis5 - previousMillis5 >= 100) {
+          //              previousMillis5 = millis();
+          //              relay3_State = false;
+          //              digitalWrite(RELAY3, relay3_State);
+          //            }
+          //          }
+          //          else if (pHUnit1 > 6.00) {
+          //            digitalWrite(RELAY3, LOW);
+          //          }
+        }
+        else if (distance1 != 0 /*&& pHUnit1 > 6.00*/) { //Check if influent container is full.
+          isFull = true;
+          digitalWrite(RELAY4, HIGH); //Turn on mixing pump
+          digitalWrite(RELAY2, HIGH);
+          //          if (pHUnit1 <= 6.00) {
+          //            unsigned long currentMillis5 = millis();
+          //            if (!relay3_State && currentMillis5 - previousMillis5 >= 5000) {
+          //              previousMillis5 = millis();
+          //              relay3_State = true;
+          //              digitalWrite(RELAY3, relay3_State);
+          //            }
+          //            else if (relay3_State && currentMillis5 - previousMillis5 >= 100) {
+          //              previousMillis5 = millis();
+          //              relay3_State = false;
+          //              digitalWrite(RELAY3, relay3_State);
+          //            }
+          //          }
+          //          else if (pHUnit1 > 6.00) {
+          //            digitalWrite(RELAY3, LOW);
+          //          }
+          digitalWrite(RELAY1, LOW); //Turn off influent pump
           unsigned long currentMillis2 = millis();
-            if(currentMillis2 - previousMillis2 >= interval){ //Every 1000ms
-              previousMillis2 = millis(); //0 is replaced with 1000 and so on
-              relay2_isOn = !relay2_isOn;
-              digitalWrite(RELAY5, relay2_isOn); //Relay2 copies logic of relay2 boolean.
-              distance1_Read(); //Check distance
-              if(distance1 != 0 && distance1 == 24){
-                isFull = false;
-                initStatus = false;
-                digitalWrite(RELAY2, LOW);
-                digitalWrite(RELAY5, LOW);
-              }
+          if (!relay5_State && currentMillis2 - previousMillis2 >= interval_Off) { //Every 1000ms
+            previousMillis2 = millis(); //0 is replaced with 1000 and so on
+            relay5_State = true;
+            digitalWrite(RELAY5, relay5_State); //Pump turns off
+          }
+          else if (relay5_State && currentMillis2 - previousMillis2 >= interval_On) {
+            previousMillis2 = millis();
+            relay5_State = false;
+            digitalWrite(RELAY5, relay5_State); //Pump turns on
+            distance1_Read(); //Check distance
+            if (distance1 != 0 && distance1 == 25) {
+              isFull = false;
+              initStatus = false;
+              digitalWrite(RELAY2, LOW);
+              digitalWrite(RELAY4, LOW);
+              digitalWrite(RELAY5, LOW);
             }
+          }
         }
         incoming = Serial.read();
         if (incoming == '2') {
@@ -104,7 +143,7 @@ void loop() {
 
 void main_printF() {
   unsigned long currentMillis1 = millis();
-  if (currentMillis1 - previousMillis1 >= interval) {
+  if (currentMillis1 - previousMillis1 >= 1000) {
     previousMillis1 = millis();
     pH1_Print();
     turbidity1_Print();
@@ -171,29 +210,45 @@ void pH2_Print() {
 }
 
 float turbidity1_Read() {
-  float sensorValue = analogRead(TURBIDITY1_PIN);
-  float voltage = sensorValue * (5.0 / 1024.0) + OffsetTurb1;
-  turbidityUnit1 = (-1120.4 * voltage * voltage) + 5742.3 * voltage - 4352.9;
-  return turbidityUnit1;
+  sensorValue1 = analogRead(TURBIDITY1_PIN);
+  voltage1 = (sensorValue1 * (5.0 / 1024.0)) + OffsetTurb1;
+  return voltage1;
 }
 
 void turbidity1_Print() {
   turbidity1_Read();
-  Serial.print(turbidityUnit1);
-  Serial.print("NTU ");
+  Serial.print(voltage1);
+  Serial.print(" ");
+//  if (voltage1 >= 4.06 && voltage1 <= 5.00) {
+//    Serial.print("CLEAR ");
+//  }
+//  else if (voltage1 >= 3.23 && voltage1 <= 4.05) {
+//    Serial.print("MILD ");
+//  }
+//  else if (voltage1 <= 3.22) {
+//    Serial.print("TURBID ");
+//  }
 }
 
 float turbidity2_Read() {
-  float sensorValue = analogRead(TURBIDITY2_PIN);
-  float voltage = (sensorValue * (5.0 / 1024.0)) + OffsetTurb2;
-  turbidityUnit2 = (-1120.4 * voltage * voltage) + 5742.3 * voltage - 4352.9;
-  return turbidityUnit2;
+  sensorValue2 = analogRead(TURBIDITY2_PIN);
+  voltage2 = (sensorValue2 * (5.0 / 1024.0)) + OffsetTurb2;
+  return voltage2;
 }
 
 void turbidity2_Print() {
   turbidity2_Read();
-  Serial.print(turbidityUnit2);
-  Serial.print("NTU ");
+  Serial.print(voltage2);
+  Serial.print(" ");
+//  if (voltage2 >= 4.06 && voltage2 <= 5.00) {
+//    Serial.print("CLEAR ");
+//  }
+//  else if (voltage2 >= 3.23 && voltage2 <= 4.05) {
+//    Serial.print("MILD ");
+//  }
+//  else if (voltage2 <= 3.22) {
+//    Serial.print("TURBID ");
+//  }
 }
 
 int moisture_Read() {
@@ -204,22 +259,34 @@ int moisture_Read() {
 
 void moisture_Print() {
   moisture_Read();
-  Serial.print(moistureValue);
-  Serial.print("% ");
+  if (moistureValue < 0) {
+    Serial.print("0% ");
+  } else {
+    Serial.print(moistureValue);
+    Serial.print("% ");
+  }
 }
 
 void volume1_Print() {
   distance1_Read();
-  double waterLevel1 = ((26.0-distance1)/26.0)*100.0;
-  Serial.print(waterLevel1);
-  Serial.print("% ");
+  double waterLevel1 = ((max_distance1 - distance1) / max_distance1) * 100.0;
+  if (waterLevel1 < 0) {
+    Serial.print("0.00% ");
+  } else {
+    Serial.print(waterLevel1);
+    Serial.print("% ");
+  }
 }
 
 void volume2_Print() {
   distance2_Read();
-  double waterLevel2 = ((25.0-distance2)/25.0)*100.0;
-  Serial.print(waterLevel2);
-  Serial.print("% ");
+  double waterLevel2 = ((max_distance2 - distance2) / max_distance2) * 100.0;
+  if (waterLevel2 < 0) {
+    Serial.print("0.00% ");
+  } else {
+    Serial.print(waterLevel2);
+    Serial.print("% ");
+  }
 }
 
 float temp_Read() {
