@@ -91,7 +91,6 @@ void loop() {
 
 void main_printF() {
   unsigned long currentMillis = millis();
-  unsigned long previousMillis = 0;
   if (currentMillis - previousMillis >= interval) {
     pH1_Print();
     turbidity1_Print();

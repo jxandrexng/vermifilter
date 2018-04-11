@@ -1,4 +1,3 @@
-import os
 import time
 import random
 import serial
@@ -7,10 +6,10 @@ import MySQLdb
 from Tkinter import *
 
 #connection of serial port to arduino
-serial_speed = 2000000
+serial_speed = 9600
 serial_port = '/dev/ttyACM0'
 
-ser = serial.Serial(serial_port, serial_speed)
+ser = serial.Serial(serial_port, serial_speed, timeout=1)
 
 #font
 HELV29 = ("Helvetica", 29, "bold")
@@ -29,7 +28,7 @@ class Application(Frame):
             self.master = master
             master.title("Automated Vermifiltration System")
             master.resizable(width=False, height=False)
-            master.geometry('{}x{}'.format(800, 480))
+            master.geometry('{}x{}'.format(790, 480))
 
             self.header_frame_label_name = StringVar()
             self.localtime_name = StringVar()
@@ -81,38 +80,38 @@ class Application(Frame):
     
     def frame(self):
         #setting frame
-        self.f3 = Frame(self, width = 280, height = 100, relief=SUNKEN, bd=5)
+        self.f3 = Frame(self, width = 220, height = 100, relief=SUNKEN, bd=10)
         self.f3.grid(row=2)
 
-        self.f3a = Frame(self.f3, width=170, height=100, bd=5, relief="raise", bg="cyan")
+        self.f3a = Frame(self.f3, width=210, height=100, bd=10, relief="raise", bg="cyan")
         self.f3a.grid(row=2)
 
-        self.f3b = Frame(self.f3a, width=90, height=70, bd=5, bg="light goldenrod", padx=10, pady=15, relief="raise")
+        self.f3b = Frame(self.f3a, width=105, height=70, bd=5, bg="light goldenrod", padx=10, pady=15, relief="raise")
         self.f3b.grid(row=2, column=0)
 
-        self.f3c = Frame(self.f3a, width=90, height=70, bd=5, bg="OliveDrab1", padx=10, pady=15, relief="raise")
+        self.f3c = Frame(self.f3a, width=105, height=70, bd=5, bg="OliveDrab1", padx=10, pady=15, relief="raise")
         self.f3c.grid(row=2, column=1)
 
-        self.f3d = Frame(self.f3a, width=45, height=10, pady=3, bd=5, bg="SkyBlue1", relief="raise")
+        self.f3d = Frame(self.f3a, width=185, height=10, bd=5, bg="SkyBlue1", relief="raise")
         self.f3d.grid(row=3, column=0, columnspan=2)
 
-        self.f4 = Frame(self, width = 30, height = 75, relief=SUNKEN, bd=5)
+        self.f4 = Frame(self, width = 190, height = 235, relief=SUNKEN, bd=10)
         self.f4.grid(row=2, column=2)
 
-        self.f4a = Frame(self.f4, width = 30, height = 75, relief="raise", bd=5, pady=3, padx=1, bg="white")
+        self.f4a = Frame(self, width = 160, height = 205, relief="raise", bd=5, pady=3, padx=1, bg="white")
         self.f4a.grid(row=2, column=2, ipadx=1)
 
-        self.f5 = Frame(self, width = 200, height = 75, relief=SUNKEN, bd=5)
+        self.f5 = Frame(self, width = 610, height = 75, relief=SUNKEN, bd=10)
         self.f5.grid(row=3, column=0)
 
-        self.f5a = Frame(self.f5, width = 180, height = 75, relief="raise", bd=5, padx=35, bg="cyan")
+        self.f5a = Frame(self, width = 580, height = 70, relief="raise", bd=5, padx=40, bg="cyan")
         self.f5a.grid(row=3, column=0)
 
-        self.f6 = Frame(self, width = 140, height = 75, relief=SUNKEN, bd=5)
-        self.f6.grid(row=3, column=2, columnspan=2)
+        self.f6 = Frame(self, width = 190, height = 75, relief=SUNKEN, bd=10)
+        self.f6.grid(row=3, column=2)
 
-        self.f6a = Frame(self.f6, width = 50, height = 75, relief="raise", bd=5, pady=5, bg="cyan")
-        self.f6a.grid(row=3, column=2, columnspan=2)
+        self.f6a = Frame(self, width = 180, height = 75, relief="raise", bd=5, padx=15, pady=5, bg="cyan")
+        self.f6a.grid(row=3, column=2)
 
     def input_saved(self):
          self.ph_saved_data.set(self.ph_input.get())
@@ -203,10 +202,10 @@ class Application(Frame):
                 
                 #Nph input
                 self.Nph_input_label_name.set("Ph Input: ")
-                self.Nph_input_label.grid(row=3, column=0, columnspan=1, ipadx=5)
+                self.Nph_input_label.grid(row=3, column=0)
 
                 self.Nph_input_data.set("Ph Input: ")
-                self.Nph_input.grid(row=3, column=1, ipadx=5)
+                self.Nph_input.grid(row=3, column=1)
 
                 #Nturbidity input
                 self.Nturb_input_label_name.set("Turbidity Input: ")
@@ -216,7 +215,7 @@ class Application(Frame):
                 self.Nturb_input.grid(row=4, column=1)
 
                 #breakline
-                self.Breakline_label_name.set("--------")
+                self.Breakline_label_name.set("-------------")
                 self.Breakline_label.grid(row=5, column=0, columnspan=2)
                 
                 #Treated label
@@ -314,27 +313,27 @@ class Application(Frame):
         self.Untreated_label = Label(self.f4a, text="Untreated Water", fg="red", font=HELV12, bg="white")
         
         #ph Input
-        self.Nph_input_label = Label(self.f4a, text="pH Influent: ", font=HELV9, padx=10, bg="white")
+        self.Nph_input_label = Label(self.f4a, text="PH Input: ", font=HELV9, padx=10, bg="white")
 
         self.Nph_input = Label(self.f4a, textvariable=self.ph_saved_data, font=HELV9, bg="white")
         #turbidity input
-        self.Nturb_input_label = Label(self.f4a, text="Turbidity Influent: ", font=HELV9, padx=10, bg="white")
+        self.Nturb_input_label = Label(self.f4a, text="Turbidity Input: ", font=HELV9, padx=10, bg="white")
         
         self.Nturb_input = Label(self.f4a, textvariable=self.turb_saved_data, font=HELV9, bg="white")
 
         #Breakline
-        self.Breakline_label = Label(self.f4a, text="--------------------------------------", font=HELV12, bg="white")
+        self.Breakline_label = Label(self.f4a, text="-----------------------------", font=HELV12, bg="white")
         
         #Treated label
         self.Treated_label = Label(self.f4a, text="Treated Water", fg="green", font=HELV12, bg="white")
         
         #Nph output
-        self.Nph_output_label = Label(self.f4a, text="pH Efluent:", font=HELV9, padx=10, bg="white")
+        self.Nph_output_label = Label(self.f4a, text="PH Output:", font=HELV9, padx=10, bg="white")
    
         self.Nph_output = Label(self.f4a, textvariable=self.Nph_saved_data, font=HELV9, bg="white")
 
         #turbidity Output
-        self.Nturb_output_label = Label(self.f4a, text="Turbidity Efluent: ", font=HELV9, padx=10, bg="white")
+        self.Nturb_output_label = Label(self.f4a, text="Turbidity Output: ", font=HELV9, padx=10, bg="white")
         
         self.Nturb_output = Label(self.f4a, textvariable=self.Nturb_saved_data, font=HELV9, bg="white")
         
@@ -370,10 +369,10 @@ class Application(Frame):
         self.btn_shutdown = Button(self.f5a, text="Shutdown", command=self.iexit, bd=8, bg="gray70", font=HELV12, padx=5, pady=5).grid(row=0,column=5)
 
         #=======================Credits 4th container======================
-        self.company_name = Label(self.f6a, text= u"\u00A9 JME    ", font=HELV12, bg="cyan")
+        self.company_name = Label(self.f6a, text=u"\u00A9 JME", font=HELV12, bg="cyan")
         self.company_name.grid(row=0, column=0)
 
-        self.company_name = Label(self.f6a, text="         Adviser: Jerwin V. Obmerga               ", font=HELV7, bg="cyan")
+        self.company_name = Label(self.f6a, text="Adviser: Jerwin V. Obmerga", font=HELV7, bg="cyan")
         self.company_name.grid(row=1, column=0)
     #================================ Timer =============================
     def update_time(self):
@@ -431,8 +430,8 @@ class Application(Frame):
         self.qexit = tkMessageBox.askyesno(" ", "Are you sure you want to exit?")
         if self.qexit > 0:
             root.destroy()
-            os.system("sudo shutdown -h now")
             return
+	
 
 
 root = Tk()
