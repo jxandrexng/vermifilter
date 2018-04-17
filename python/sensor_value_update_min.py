@@ -10,7 +10,7 @@ from Tkinter import *
 serial_speed = 2000000
 serial_port = '/dev/ttyACM0'
 
-ser = serial.Serial(serial_port, serial_speed)
+ser = serial.Serial(serial_port, serial_speed, timeout = 0.001)
 
 #font
 HELV29 = ("Helvetica", 29, "bold")
@@ -117,11 +117,12 @@ class Application(Frame):
     def input_saved(self):
          self.ph_saved_data.set(self.ph_input.get())
          self.turb_saved_data.set(self.turb_input.get())
-
+         
     def output_saved(self):
          self.Nph_saved_data.set(self.ph_output.get())
          self.Nturb_saved_data.set(self.turb_output.get())
-
+        
+        
                 
     #get the values from the arduino and split and store to the text variable
     def measure(self):
@@ -240,7 +241,7 @@ class Application(Frame):
             except IndexError:
                 pass
 
-        self.after(1000, self.measure)
+        self.after(250, self.measure)
 
     def createWidgets(self):
         #=====================================Untreated==========================================================
@@ -393,11 +394,52 @@ class Application(Frame):
             if (self.timer[1] >= 60):
                 self.timer[0] += 1
                 self.timer[1] = 0
+              
+            if(self.timer[1] == 2): #initialize al readings before saving the input
+                self.input_saved()
+                
+            if(self.timer[1] == 30): #ph input after dillution process
+                self.input_saved()  
 
+            if(self.timer[0] == 1 and self.timer[1] == 0 and self.timer[2] == 1):# after 1 hour the effluent will measure the output
+                self.input_saved()
+                self.output_saved()
+                
+            if(self.timer[0] == 1 and self.timer[1] == 30 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+                
+            if(self.timer[0] == 2 and self.timer[1] == 0 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+
+            if(self.timer[0] == 2 and self.timer[1] == 30 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+
+            if(self.timer[0] == 3 and self.timer[1] == 0 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+
+            if(self.timer[0] == 3 and self.timer[1] == 30 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+
+            if(self.timer[0] == 4 and self.timer[1] == 0 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+
+            if(self.timer[0] == 4 and self.timer[1] == 30 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+
+            if(self.timer[0] == 5 and self.timer[1] == 0 and self.timer[2] == 1):
+                self.input_saved()
+                self.output_saved()
+                
             self.timeString = str(self.timer[0]) + ':' + str(self.timer[1]) + ':' + str(self.timer[2]) + ':' + str(self.timer[3])
             self.show.config(text=self.timeString)
         root.after(10, self.update_time)
-
 
     def start(self):            #Start the clock
         self.running = True 
