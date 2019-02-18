@@ -1,4 +1,4 @@
-# vermifilter
+# Automated Vermifiltration System
 Automated Vermifiltration System by EJ Mindanao | Jerome Ng | Marx Sabandana
 
 This is an undergraduate thesis done under the advisory of Engr. Jerwin V. Obmerga in Southern Luzon State University (Lucban, Philippines)
